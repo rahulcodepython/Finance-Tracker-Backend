@@ -1,0 +1,66 @@
+package services
+
+import (
+	"database/sql"
+
+	"github.com/google/uuid"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/repository"
+)
+
+func CreateAccount(userID uuid.UUID, name string, accountType models.AccountType, db *sql.DB) (*models.Account, error) {
+	account := &models.Account{
+		ID:     uuid.New(),
+		UserID: userID,
+		Name:   name,
+		Type:   accountType,
+	}
+
+	err := repository.CreateAccount(account, db)
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil
+}
+
+func GetAccounts(userID uuid.UUID, db *sql.DB) ([]models.Account, error) {
+	return repository.GetAccountsByUserID(userID, db)
+}
+
+func UpdateAccount(id uuid.UUID, name string, accountType models.AccountType, db *sql.DB) (*models.Account, error) {
+	account, err := repository.GetAccountByID(id, db)
+	if err != nil {
+		return nil, err
+	}
+
+	account.Name = name
+	account.Type = accountType
+
+	err = repository.UpdateAccount(account, db)
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil
+}
+
+func DeleteAccount(id uuid.UUID, db *sql.DB) error {
+	return repository.DeleteAccount(id, db)
+}
+
+func GetTotalBalance(userID uuid.UUID, db *sql.DB) (float64, error) {
+	accounts, err := repository.GetAccountsByUserID(userID, db)
+	if err != nil {
+		return 0, err
+	}
+
+	var totalBalance float64
+	for _, account := range accounts {
+		if account.IsActive {
+			totalBalance += account.Balance
+		}
+	}
+
+	return totalBalance, nil
+}
