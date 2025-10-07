@@ -5,22 +5,19 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	v1 "github.com/rahulcodepython/finance-tracker-backend/api/v1"
-	"github.com/rahulcodepython/finance-tracker-backend/backend/config"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/middleware"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
-func Setup(app *fiber.App, cfg *config.Config, db *sql.DB) {
+func Setup(app *fiber.App) {
 	api := app.Group("/api")
 
 	v1Api := api.Group("/v1")
 
 	v1Api.Get("/", func(c *fiber.Ctx) error {
+		db := c.Locals("db").(*sql.DB)
 		utils.Ping(db)
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"success": true,
-			"message": "You are at the root endpoint 😉",
-		})
+		return utils.OKResponse(c, "Welcome to the Finance Tracker API", nil)
 	})
 
 	auth := v1Api.Group("/auth")

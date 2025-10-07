@@ -16,11 +16,11 @@ func CreateUser(user *models.User, db *sql.DB) error {
 func GetUserByEmail(email string, db *sql.DB) (*models.User, error) {
 	query := "SELECT * FROM users WHERE email = $1"
 	row := db.QueryRow(query, email)
-
 	var user models.User
+
 	if err := row.Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.Provider, &user.CreatedAt); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil // Or a custom not found error
+			return nil, err // Or a custom not found error
 		}
 		return nil, err
 	}

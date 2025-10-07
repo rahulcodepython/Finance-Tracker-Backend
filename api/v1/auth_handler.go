@@ -9,9 +9,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/config"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
-
-var googleOauthConfig = config.LoadConfig().GoogleOauthConfig
 
 // GoogleLogin godoc
 // @Summary Initiate Google OAuth login
@@ -20,7 +19,8 @@ var googleOauthConfig = config.LoadConfig().GoogleOauthConfig
 // @Success 302 {string} string "Redirects to Google login page"
 // @Router /auth/google/login [get]
 func GoogleLogin(c *fiber.Ctx) error {
-	url := googleOauthConfig.AuthCodeURL("state")
+	cfg := c.Locals("cfg").(*config.Config)
+	url := cfg.GoogleOauthConfig.AuthCodeURL("state")
 	return c.Redirect(url)
 }
 
@@ -34,37 +34,37 @@ func GoogleLogin(c *fiber.Ctx) error {
 func GoogleCallback(c *fiber.Ctx) error {
 	code := c.Query("code")
 
-	token, err := googleOauthConfig.Exchange(context.Background(), code)
+	db := c.Locals("db").(*sql.DB)
+	cfg := c.Locals("cfg").(*config.Config)
+
+	token, err := cfg.GoogleOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to exchange token", "error": err.Error()})
+		return utils.InternelServerError(c, err, "Failed to exchange token")
 	}
 
-	response, err := googleOauthConfig.Client(context.Background(), token).Get("https://www.googleapis.com/oauth2/v2/userinfo")
+	response, err := cfg.GoogleOauthConfig.Client(context.Background(), token).Get("https://www.googleapis.com/oauth2/v2/userinfo")
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to get user info", "error": err.Error()})
+		return utils.InternelServerError(c, err, "Failed to get user info")
 	}
 
 	defer response.Body.Close()
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to read user info", "error": err.Error()})
+		return utils.InternelServerError(c, err, "Failed to read user info")
 	}
 
 	var userInfo map[string]interface{}
 	if err := json.Unmarshal(body, &userInfo); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to parse user info", "error": err.Error()})
+		return utils.InternelServerError(c, err, "Failed to parse user info")
 	}
-
-	db := c.Locals("db").(*sql.DB)
-	cfg := c.Locals("cfg").(*config.Config)
 
 	user, jwt, err := services.GoogleLogin(userInfo["email"].(string), userInfo["name"].(string), db, cfg)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to login with Google", "error": err.Error()})
+		return utils.InternelServerError(c, err, "Failed to login with Google")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Login successful", "data": fiber.Map{"user": user, "token": jwt}})
+	return utils.OKResponse(c, "Login successful", fiber.Map{"user": user, "token": jwt})
 }
 
 // Register godoc
@@ -78,7 +78,7 @@ func GoogleCallback(c *fiber.Ctx) error {
 // @Router /auth/register [post]
 func Register(c *fiber.Ctx) error {
 	type RegisterInput struct {
-		FullName string `json:"fullName"`
+		Name     string `json:"name"`
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
@@ -86,18 +86,18 @@ func Register(c *fiber.Ctx) error {
 	var input RegisterInput
 
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
+		return utils.BadInternalResponse(c, err, "Invalid request")
 	}
 
 	db := c.Locals("db").(*sql.DB)
 	cfg := c.Locals("cfg").(*config.Config)
 
-	user, token, err := services.Register(input.FullName, input.Email, input.Password, db, cfg)
+	user, token, err := services.Register(input.Name, input.Email, input.Password, db, cfg)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to create user", "error": err.Error()})
+		return utils.InternelServerError(c, err, "Failed to create user")
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"success": true, "message": "User registered successfully", "data": fiber.Map{"user": user, "token": token}})
+	return utils.OKCreatedResponse(c, "User registered successfully", fiber.Map{"user": user, "token": token})
 }
 
 // Login godoc
@@ -118,7 +118,7 @@ func Login(c *fiber.Ctx) error {
 	var input LoginInput
 
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
+		return utils.BadInternalResponse(c, err, "Invalid request")
 	}
 
 	db := c.Locals("db").(*sql.DB)
@@ -126,10 +126,10 @@ func Login(c *fiber.Ctx) error {
 
 	user, token, err := services.Login(input.Email, input.Password, db, cfg)
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"success": false, "message": "Invalid credentials", "error": err.Error()})
+		return utils.UnauthorizedAccess(c, err, "Invalid credentials")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Login successful", "data": fiber.Map{"user": user, "token": token}})
+	return utils.OKResponse(c, "Login successful", fiber.Map{"user": user, "token": token})
 }
 
 // GetProfile godoc
@@ -146,10 +146,10 @@ func GetProfile(c *fiber.Ctx) error {
 
 	user, err := services.GetProfile(userID, db)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"success": false, "message": "User not found", "error": err.Error()})
+		return utils.NotFound(c, err, "User not found")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Profile retrieved successfully", "data": fiber.Map{"personal": fiber.Map{"fullName": user.Name, "email": user.Email}}})
+	return utils.OKResponse(c, "Profile retrieved successfully", fiber.Map{"personal": fiber.Map{"fullName": user.Name, "email": user.Email}})
 }
 
 // ChangePassword godoc
@@ -171,15 +171,15 @@ func ChangePassword(c *fiber.Ctx) error {
 	var input ChangePasswordInput
 
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
+		return utils.BadInternalResponse(c, err, "Invalid request")
 	}
 
 	userID := c.Locals("user_id").(string)
 	db := c.Locals("db").(*sql.DB)
 
 	if err := services.ChangePassword(userID, input.CurrentPassword, input.NewPassword, db); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to change password", "error": err.Error()})
+		return utils.InternelServerError(c, err, "Failed to change password")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Password changed successfully"})
+	return utils.OKResponse(c, "Password changed successfully", nil)
 }

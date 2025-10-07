@@ -33,7 +33,7 @@ func main() {
 
 	// router.Router() is called to set up all the application routes and middleware.
 	// It takes the Fiber server, configuration, and database connection as arguments.
-	routes.Setup(server, cfg, db)
+	routes.Setup(server)
 
 	// address is a string that represents the server address.
 	// It is constructed by combining the server host and port from the configuration.

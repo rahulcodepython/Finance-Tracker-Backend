@@ -9,18 +9,18 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-type ServerConfig struct {
+type serverConfig struct {
 	Host string
 	Port string
 }
 
-type GoogleOAuth2Config struct {
+type googleOAuth2Config struct {
 	RedirectUrl  string
 	ClientId     string
 	ClientSecret string
 }
 
-type Database struct {
+type database struct {
 	DBHost     string
 	DBUser     string
 	DBPassword string
@@ -29,20 +29,19 @@ type Database struct {
 	DBSSMode   string
 }
 
-type JWT struct {
+type jwt struct {
 	JWTSecret    string
 	JWTExpiresAt string
 }
 
 type Config struct {
-	ServerConfig       ServerConfig
-	GoogleOAuth2Config GoogleOAuth2Config
-	GoogleOauthConfig  *oauth2.Config
-	Database           Database
-	JWT                JWT
+	ServerConfig      serverConfig
+	GoogleOauthConfig *oauth2.Config
+	Database          database
+	JWT               jwt
 }
 
-func ParseEnv(key string, defaultValue string) string {
+func parseEnv(key string, defaultValue string) string {
 	envValue := os.Getenv(key)
 	// This checks if the environment variable is empty.
 	if envValue == "" {
@@ -62,33 +61,28 @@ func LoadConfig() *Config {
 	}
 
 	return &Config{
-		ServerConfig: ServerConfig{
-			Host: ParseEnv("SERVER_HOST", "localhost"),
-			Port: ParseEnv("SERVER_PORT", "8080"),
-		},
-		GoogleOAuth2Config: GoogleOAuth2Config{
-			RedirectUrl:  ParseEnv("GOOGLE_REDIRECT_URL", ""),
-			ClientId:     ParseEnv("GOOGLE_CLIENT_ID", ""),
-			ClientSecret: ParseEnv("GOOGLE_CLIENT_SECRET", ""),
+		ServerConfig: serverConfig{
+			Host: parseEnv("SERVER_HOST", "localhost"),
+			Port: parseEnv("SERVER_PORT", "8080"),
 		},
 		GoogleOauthConfig: &oauth2.Config{
-			RedirectURL:  ParseEnv("GOOGLE_REDIRECT_URL", ""),
-			ClientID:     ParseEnv("GOOGLE_CLIENT_ID", ""),
-			ClientSecret: ParseEnv("GOOGLE_CLIENT_SECRET", ""),
+			RedirectURL:  parseEnv("GOOGLE_REDIRECT_URL", ""),
+			ClientID:     parseEnv("GOOGLE_CLIENT_ID", ""),
+			ClientSecret: parseEnv("GOOGLE_CLIENT_SECRET", ""),
 			Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"},
 			Endpoint:     google.Endpoint,
 		},
-		Database: Database{
-			DBHost:     ParseEnv("DB_HOST", "localhost"),
-			DBUser:     ParseEnv("DB_USER", "postgres"),
-			DBPassword: ParseEnv("DB_PASSWORD", "postgres"),
-			DBName:     ParseEnv("DB_NAME", "finance-tracker"),
-			DBPort:     ParseEnv("DB_PORT", "5432"),
-			DBSSMode:   ParseEnv("DB_SSL_MODE", "disable"),
+		Database: database{
+			DBHost:     parseEnv("DB_HOST", "localhost"),
+			DBUser:     parseEnv("DB_USER", "postgres"),
+			DBPassword: parseEnv("DB_PASSWORD", "postgres"),
+			DBName:     parseEnv("DB_NAME", "finance-tracker"),
+			DBPort:     parseEnv("DB_PORT", "5432"),
+			DBSSMode:   parseEnv("DB_SSL_MODE", "disable"),
 		},
-		JWT: JWT{
-			JWTSecret:    ParseEnv("JWT_SECRET", "secret"),
-			JWTExpiresAt: ParseEnv("JWT_EXPIRES_AT", "1h"),
+		JWT: jwt{
+			JWTSecret:    parseEnv("JWT_SECRET", "secret"),
+			JWTExpiresAt: parseEnv("JWT_EXPIRES_AT", "1h"),
 		},
 	}
 }

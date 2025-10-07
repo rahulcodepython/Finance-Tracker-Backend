@@ -12,7 +12,7 @@ import (
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
-func Register(fullName, email, password string, db *sql.DB, cfg *config.Config) (*models.User, string, error) {
+func Register(name, email, password string, db *sql.DB, cfg *config.Config) (*models.User, string, error) {
 	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
 		return nil, "", err
@@ -20,7 +20,7 @@ func Register(fullName, email, password string, db *sql.DB, cfg *config.Config) 
 
 	user := &models.User{
 		ID:        uuid.New(),
-		Name:      fullName,
+		Name:      name,
 		Email:     email,
 		Password:  hashedPassword,
 		Provider:  models.AuthProviderEmail,

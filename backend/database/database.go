@@ -38,7 +38,7 @@ func Connect(cfg *config.Config) *sql.DB {
 }
 
 func CreateTables(db *sql.DB) {
-	sqlFilePath := "migrations/0001_initial_schema.up.sql"
+	sqlFilePath := "migrations/schema.sql"
 	content, err := os.ReadFile(sqlFilePath)
 	if err != nil {
 		log.Fatalf("Error reading SQL file %s: %v", sqlFilePath, err)
