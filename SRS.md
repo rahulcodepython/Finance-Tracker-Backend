@@ -142,23 +142,52 @@ Plaintext
 /finance-tracker-api
 ├── /api
 │   └── /v1              # API versioning, contains handlers/controllers
-│       ├── auth_handler.go
-│       ├── account_handler.go
-│       ├── transaction_handler.go
-│       └── dashboard_handler.go
+│       ├── auth.handler.go
+│       ├── account.handler.go
+│       ├── transaction.handler.go
+│       ├── dashboard.handler.go
+│       ├── budget.handler.go
+│       ├── category.handler.go
+│       ├── recurring_transaction.handler.go
+│       └── report.handler.go
 ├── /backend
 │       ├── /config              # Configuration management
 │       │   └── config.go
-│       ├── /internal
-│       │   ├── /database        # DB connection, setup, migrations, ping
-│       │   ├── /middleware      # Custom Fiber middleware (auth, logging)
-│       │   ├── /models          # Structs for DB entities and API requests/responses
-│       │   ├── /repository      # Data Access Layer (interacts with the DB)
-│       │   ├── /routes          # API route definitions
-│       │   ├── /services        # Business logic layer
-│       │   └── /utils           # Helpers (password, token, validation)
-│       ├── /pkg
+│       ├── /database        # DB connection, setup, migrations, ping
+│       │   └── database.go
+│       ├── /middleware      # Custom Fiber middleware (auth, logging)
+│       │   └── auth.go
+│       ├── /models          # Structs for DB entities and API requests/responses
+│       │   ├── account.go
+│       │   ├── budget.go
+│       │   ├── category.go
+│       │   ├── recurring_transaction.go
+│       │   ├── transaction.go
+│       │   └── user.go
+│       ├── /repository      # Data Access Layer (interacts with the DB)
+│       │   ├── account.repository.go
+│       │   ├── category.repository.go
+│       │   ├── transaction.repository.go
+│       │   └── user.repository.go
+│       ├── /routes          # API route definitions
+│       │   └── routes.go
+│       ├── /services        # Business logic layer
+│       │   ├── account.service.go
+│       │   ├── budget.service.go
+│       │   ├── category.service.go
+│       │   ├── dashboard.service.go
+│       │   ├── recurring_transaction.service.go
+│       │   ├── report.service.go
+│       │   ├── transaction.service.go
+│       │   └── user.service.go
+│       ├── /utils           # Helpers (password, token, validation)
+│       │   ├── password.go
+│       │   ├── ping.go
+│       │   ├── response.go
+│       │   └── token.go
+│       └── /pkg
 │           └── /scheduler       # Background jobs (recurring transactions)
+│               └── scheduler.go
 ├── main.go              # Main application entry point
 ├── .env.example         # Environment variable template
 ├── Dockerfile           # Docker build instructions
@@ -427,13 +456,63 @@ graph TD
 - **NFR-17 (Error Handling):** The API must provide consistent and meaningful error messages and HTTP status codes to aid frontend development and debugging.
     
 
-## 6. API Specification (Revised)
+## 6. API Endpoints
+
+### Base Route
+- `GET /api/v1/`
+
+### Auth Routes
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `GET /api/v1/auth/profile`
+- `POST /api/v1/auth/change-password`
+- `GET /api/v1/auth/google/login`
+- `GET /api/v1/auth/google/callback`
+
+### Accounts Routes
+- `POST /api/v1/accounts/create`
+- `GET /api/v1/accounts/`
+- `PATCH /api/v1/accounts/update/:id`
+- `DELETE /api/v1/accounts/delete/:id`
+- `GET /api/v1/accounts/total-balance`
+
+### Transactions Routes
+- `POST /api/v1/transactions/create`
+- `GET /api/v1/transactions/`
+- `PATCH /api/v1/transactions/update/:id`
+- `DELETE /api/v1/transactions/delete/:id`
+- `GET /api/v1/transactions/aggregate`
+
+### Dashboard Routes
+- `GET /api/v1/dashboard/`
+
+### Reports Routes
+- `GET /api/v1/reports/`
+- `GET /api/v1/reports/export`
+
+### Categories Routes
+- `POST /api/v1/categories/create`
+- `GET /api/v1/categories/`
+- `PATCH /api/v1/categories/update/:id`
+- `DELETE /api/v1/categories/delete/:id`
+
+### Budgets Routes
+- `POST /api/v1/budgets/create`
+- `GET /api/v1/budgets/`
+- `PATCH /api/v1/budgets/update/:id`
+- `DELETE /api/v1/budgets/delete/:id`
+
+### Recurring Transactions Routes
+- `POST /api/v1/recurring-transactions/create`
+- `GET /api/v1/recurring-transactions/`
+- `PATCH /api/v1/recurring-transactions/update/:id`
+- `DELETE /api/v1/recurring-transactions/delete/:id`
+
+## 7. API Specification (Revised)
 
 All API responses will adhere to the following structure:
 
-JSON
-
-```
+```json
 {
   "success": true, // or false
   "message": "Descriptive message",
@@ -446,7 +525,43 @@ JSON
 
 ### **`/api/v1/auth`**
 
-- **Endpoint: `POST /login`**
+- **Endpoint: `POST /api/v1/auth/register`**
+    
+    - **Description:** Registers a new user.
+        
+    - **Authorization:** Public
+        
+    - **Request Body:**
+        
+        ```json
+        {
+          "name": "John Doe",
+          "email": "john.doe@example.com",
+          "password": "aVeryStrongPassword123!"
+        }
+        ```
+        
+    - **Success Response (201 Created):**
+        
+        ```json
+        {
+          "success": true,
+          "message": "User registered successfully",
+          "data": {
+            "user": {
+              "id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+              "name": "John Doe",
+              "email": "john.doe@example.com",
+              "provider": "email",
+              "createdAt": "2025-10-09T10:00:00Z"
+            },
+            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "error": null
+        }
+        ```
+
+- **Endpoint: `POST /api/v1/auth/login`**
     
     - **Description:** Authenticates a user and returns a JWT.
         
@@ -454,9 +569,7 @@ JSON
         
     - **Request Body:**
         
-        JSON
-        
-        ```
+        ```json
         {
           "email": "john.doe@example.com",
           "password": "aVeryStrongPassword123!"
@@ -465,84 +578,47 @@ JSON
         
     - **Success Response (200 OK):**
         
-        JSON
-        
-        ```
+        ```json
         {
           "success": true,
           "message": "Login successful",
           "data": {
-            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-            "expiresAt": "2025-10-05T10:30:00Z"
+            "user": {
+              "id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+              "name": "John Doe",
+              "email": "john.doe@example.com",
+              "provider": "email",
+              "createdAt": "2025-10-09T10:00:00Z"
+            },
+            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
           },
           "error": null
         }
         ```
-        
-- **Endpoint: `POST /register`**
+
+- **Endpoint: `GET /api/v1/auth/profile`**
     
-    - **Description:** Registers a new user and returns a JWT.
-        
-    - **Authorization:** Public
-        
-    - **Request Body:**
-        
-        JSON
-        
-        ```
-        {
-          "fullName": "Jane Doe",
-          "email": "jane.doe@example.com",
-          "password": "anotherSecurePassword456!"
-        }
-        ```
-        
-    - **Success Response (201 Created):**
-        
-        JSON
-        
-        ```
-        {
-          "success": true,
-          "message": "User registered successfully",
-          "data": {
-            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-            "expiresAt": "2025-10-05T10:31:00Z"
-          },
-          "error": null
-        }
-        ```
-        
-- **Endpoint: `GET /profile`**
-    
-    - **Description:** Retrieves the profile and stats for the authenticated user.
+    - **Description:** Retrieves the profile for the authenticated user.
         
     - **Authorization:** Authenticated User
         
     - **Success Response (200 OK):**
         
-        JSON
-        
-        ```
+        ```json
         {
           "success": true,
           "message": "Profile retrieved successfully",
           "data": {
             "personal": {
-              "fullName": "Jane Doe",
-              "email": "jane.doe@example.com"
-            },
-            "stats": {
-              "activeAccounts": 3,
-              "totalTransactions": 152,
-              "daysActive": 90
+              "fullName": "John Doe",
+              "email": "john.doe@example.com"
             }
           },
           "error": null
         }
         ```
-        
-- **Endpoint: `POST /change-password`**
+
+- **Endpoint: `POST /api/v1/auth/change-password`**
     
     - **Description:** Allows an authenticated user to change their password.
         
@@ -550,20 +626,16 @@ JSON
         
     - **Request Body:**
         
-        JSON
-        
-        ```
+        ```json
         {
-          "currentPassword": "anotherSecurePassword456!",
+          "currentPassword": "aVeryStrongPassword123!",
           "newPassword": "aNewerEvenStrongerPassword789!"
         }
         ```
         
     - **Success Response (200 OK):**
         
-        JSON
-        
-        ```
+        ```json
         {
           "success": true,
           "message": "Password changed successfully",
@@ -571,195 +643,635 @@ JSON
           "error": null
         }
         ```
-        
-- **Endpoint: `GET /logout`**
-    
-    - **Description:** Logs out the user. (Note: For stateless JWT, this is typically handled client-side by deleting the token. A server-side implementation would involve a token blocklist.)
-        
-    - **Authorization:** Authenticated User
-        
-    - **Success Response (200 OK):**
-        
-        JSON
-        
-        ```
-        {
-          "success": true,
-          "message": "Logged out successfully",
-          "data": null,
-          "error": null
-        }
-        ```
-        
 
----
+- **Endpoint: `GET /api/v1/auth/google/login`**
 
-### **`/api/v1/dashboard`**
+    - **Description:** Initiates Google OAuth 2.0 login flow.
 
-- **Endpoint: `GET /`**
-    
-    - **Description:** Retrieves aggregated data for the main dashboard view for the current month.
-        
-    - **Authorization:** Authenticated User
-        
-    - **Success Response (200 OK):**
-        
-        JSON
-        
-        ```
-        {
-          "success": true,
-          "message": "Dashboard data retrieved successfully",
-          "data": {
-            "summary": {
-              "totalBalance": "12560.75",
-              "monthlyIncome": "6000.00",
-              "monthlyExpenses": "-2150.25",
-              "monthlySavings": "3849.75"
-            },
-            "graphs": {
-              "incomeVsExpense": [
-                { "month": "Aug", "income": 5800, "expense": 2200 },
-                { "month": "Sep", "income": 6000, "expense": 2500 },
-                { "month": "Oct", "income": 6000, "expense": 2150.25 }
-              ],
-              "spendingByCategory": [
-                { "category": "shopping", "amount": 850.50 },
-                { "category": "food", "amount": 650.00 },
-                { "category": "transport", "amount": 350.75 }
-              ]
-            },
-            "recentTransactions": [
-              { "description": "Weekly Groceries", "date": "2025-10-03", "type": "expense", "amount": "120.50" },
-              { "description": "Client Payment", "date": "2025-10-01", "type": "income", "amount": "1500.00" }
-            ]
-          },
-          "error": null
-        }
-        ```
-        
+- **Endpoint: `GET /api/v1/auth/google/callback`**
+
+    - **Description:** Handles the callback from Google OAuth 2.0.
 
 ---
 
 ### **`/api/v1/accounts`**
 
-- **Endpoint: `GET /`**
-    
-    - **Description:** Retrieves all of the user's financial accounts.
-        
+- **Endpoint: `POST /api/v1/accounts/create`**
+
+    - **Description:** Creates a new financial account.
     - **Authorization:** Authenticated User
-        
-    - **Success Response (200 OK):**
-        
-        JSON
-        
+    - **Request Body:**
+        ```json
+        {
+          "name": "My Savings Account",
+          "type": "savings",
+          "balance": 1000.00
+        }
         ```
+    - **Success Response (201 Created):**
+        ```json
         {
           "success": true,
-          "message": "Accounts retrieved successfully",
+          "message": "Account created successfully",
           "data": {
-            "totalBalance": "12560.75",
-            "accounts": [
-              { "id": "uuid-1", "name": "Main Checking", "isActive": true, "balance": "5430.50", "type": "checking" },
-              { "id": "uuid-2", "name": "Savings Account", "isActive": true, "balance": "7130.25", "type": "savings" }
-            ]
+            "id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+            "name": "My Savings Account",
+            "type": "savings",
+            "balance": 1000.00,
+            "is_active": true,
+            "created_at": "2025-10-09T10:00:00Z",
+            "updated_at": "2025-10-09T10:00:00Z"
           },
           "error": null
         }
         ```
-        
-- **Endpoints: `POST /create`, `PATCH /update/:id`, `DELETE /delete/:id`**
-    
-    - These endpoints will perform standard CRUD operations on accounts, accepting and returning account objects in the `data` field of the response.
-        
+
+- **Endpoint: `GET /api/v1/accounts`**
+
+    - **Description:** Retrieves all financial accounts for the authenticated user.
+    - **Authorization:** Authenticated User
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Accounts retrieved successfully",
+          "data": [
+            {
+              "id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+              "name": "My Savings Account",
+              "type": "savings",
+              "balance": 1000.00,
+              "is_active": true,
+              "created_at": "2025-10-09T10:00:00Z",
+              "updated_at": "2025-10-09T10:00:00Z"
+            }
+          ],
+          "error": null
+        }
+        ```
+
+- **Endpoint: `PATCH /api/v1/accounts/update/:id`**
+
+    - **Description:** Updates a financial account.
+    - **Authorization:** Authenticated User
+    - **Request Body:**
+        ```json
+        {
+          "name": "My Updated Savings Account",
+          "is_active": false
+        }
+        ```
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Account updated successfully",
+          "data": {
+            "id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+            "name": "My Updated Savings Account",
+            "type": "savings",
+            "balance": 1000.00,
+            "is_active": false,
+            "created_at": "2025-10-09T10:00:00Z",
+            "updated_at": "2025-10-09T10:05:00Z"
+          },
+          "error": null
+        }
+        ```
+
+- **Endpoint: `DELETE /api/v1/accounts/delete/:id`**
+
+    - **Description:** Deletes a financial account.
+    - **Authorization:** Authenticated User
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Account deleted successfully",
+          "data": null,
+          "error": null
+        }
+        ```
+
+- **Endpoint: `GET /api/v1/accounts/total-balance`**
+
+    - **Description:** Retrieves the total balance of all active accounts.
+    - **Authorization:** Authenticated User
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Total balance retrieved successfully",
+          "data": {
+            "total_balance": 5000.00
+          },
+          "error": null
+        }
+        ```
 
 ---
 
 ### **`/api/v1/transactions`**
 
-- **Endpoint: `GET /?page=1&limit=20&category=food&description=coffee`**
-    
-    - **Description:** Retrieves a paginated and filtered list of transactions.
-        
+- **Endpoint: `POST /api/v1/transactions/create`**
+
+    - **Description:** Creates a new transaction.
     - **Authorization:** Authenticated User
-        
-    - **Success Response (200 OK):**
-        
-        JSON
-        
+    - **Request Body:**
+        ```json
+        {
+          "account_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+          "category_id": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+          "description": "Groceries",
+          "amount": 75.50,
+          "type": "expense",
+          "transaction_date": "2025-10-09"
+        }
         ```
+    - **Success Response (201 Created):**
+        ```json
         {
           "success": true,
-          "message": "Transactions retrieved successfully",
+          "message": "Transaction created successfully",
           "data": {
-            "stats": {
-              "totalIncome": "6000.00",
-              "totalExpenses": "-2150.25",
-              "netIncome": "3849.75"
-            },
-            "accounts": [
-              { "id": "uuid-1", "name": "Main Checking" },
-              { "id": "uuid-2", "name": "Savings Account" }
-            ],
-            "transactions": [
-              { "id": "txn-uuid-1", "type": "expense", "amount": "4.50", "description": "Morning coffee", "category": "food", "accountId": "uuid-1", "date": "2025-10-04", "note": "From Starbucks" }
-            ],
-            "pagination": { "currentPage": 1, "totalPages": 5 }
+            "id": "c1d2e3f4-g5h6-i7j8-k9l0-m1n2o3p4q5r6",
+            "account_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+            "category_id": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+            "description": "Groceries",
+            "amount": 75.50,
+            "type": "expense",
+            "transaction_date": "2025-10-09",
+            "created_at": "2025-10-09T10:00:00Z",
+            "updated_at": "2025-10-09T10:00:00Z"
           },
           "error": null
         }
         ```
-        
-- **Endpoints: `POST /create`, `PATCH /update/:id`, `DELETE /delete/:id`**
-    
-    - These endpoints will perform standard CRUD operations on transactions, accepting and returning transaction objects in the `data` field of the response. The `category` and `type` fields must correspond to the predefined values.
-        
+
+- **Endpoint: `GET /api/v1/transactions`**
+
+    - **Description:** Retrieves all transactions for the authenticated user.
+    - **Authorization:** Authenticated User
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Transactions retrieved successfully",
+          "data": [
+            {
+              "id": "c1d2e3f4-g5h6-i7j8-k9l0-m1n2o3p4q5r6",
+              "account_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+              "category_id": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+              "description": "Groceries",
+              "amount": 75.50,
+              "type": "expense",
+              "transaction_date": "2025-10-09",
+              "created_at": "2025-10-09T10:00:00Z",
+              "updated_at": "2025-10-09T10:00:00Z"
+            }
+          ],
+          "error": null
+        }
+        ```
+
+- **Endpoint: `PATCH /api/v1/transactions/update/:id`**
+
+    - **Description:** Updates a transaction.
+    - **Authorization:** Authenticated User
+    - **Request Body:**
+        ```json
+        {
+          "description": "Weekly Groceries",
+          "amount": 80.00
+        }
+        ```
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Transaction updated successfully",
+          "data": {
+            "id": "c1d2e3f4-g5h6-i7j8-k9l0-m1n2o3p4q5r6",
+            "account_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+            "category_id": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+            "description": "Weekly Groceries",
+            "amount": 80.00,
+            "type": "expense",
+            "transaction_date": "2025-10-09",
+            "created_at": "2025-10-09T10:00:00Z",
+            "updated_at": "2025-10-09T10:10:00Z"
+          },
+          "error": null
+        }
+        ```
+
+- **Endpoint: `DELETE /api/v1/transactions/delete/:id`**
+
+    - **Description:** Deletes a transaction.
+    - **Authorization:** Authenticated User
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Transaction deleted successfully",
+          "data": null,
+          "error": null
+        }
+        ```
+
+- **Endpoint: `GET /api/v1/transactions/aggregate`**
+
+    - **Description:** Retrieves aggregate data for transactions.
+    - **Authorization:** Authenticated User
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Aggregate data retrieved successfully",
+          "data": {
+            "total_income": 5000.00,
+            "total_expense": 1250.75,
+            "net_income": 3749.25
+          },
+          "error": null
+        }
+        ```
 
 ---
 
-### **`/api/v1/reports`**
+### **`/api/v1/dashboard`**
 
-- **Endpoint: `GET /?from=2025-09-01&to=2025-09-30`**
-    
-    - **Description:** Generates a detailed report for a given date range. Defaults to the last month if no params are provided.
-        
+- **Endpoint: `GET /api/v1/dashboard`**
+
+    - **Description:** Retrieves a summary of the user's financial data for the dashboard.
     - **Authorization:** Authenticated User
-        
     - **Success Response (200 OK):**
-        
-        JSON
-        
-        ```
+        ```json
         {
           "success": true,
-          "message": "Report generated successfully",
+          "message": "Dashboard summary retrieved successfully",
           "data": {
-            "summary": {
-              "totalIncome": "6000.00",
-              "totalExpenses": "-2500.00"
-            },
-            "graphs": {
-              "incomeVsExpense": [
-                { "date": "2025-09-01", "income": 1500, "expense": 50 },
-                { "date": "2025-09-15", "income": 1500, "expense": 800 }
-              ],
-              "spendingByCategory": [
-                { "category": "shopping", "amount": 1200 },
-                { "category": "food", "amount": 800 }
-              ]
-            },
-            "incomeSources": [
-              { "type": "salary", "name": "Salary", "percentage": 83.33 },
-              { "type": "freelance", "name": "Freelance", "percentage": 16.67 }
-            ],
-            "spendingBreakdown": [
-              { "category": "shopping", "amount": "1200.00", "percentage": 48.00 },
-              { "category": "food", "amount": "800.00", "percentage": 32.00 }
+            "total_balance": 5000.00,
+            "monthly_income": 2000.00,
+            "monthly_expense": 850.50,
+            "monthly_savings": 1149.50,
+            "recent_transactions": [
+              {
+                "id": "d1e2f3g4-h5i6-j7k8-l9m0-n1o2p3q4r5s6",
+                "description": "Salary",
+                "amount": 2000.00,
+                "type": "income",
+                "transaction_date": "2025-10-01"
+              }
             ]
           },
           "error": null
         }
         ```
+
+---
+
+### **`/api/v1/reports`**
+
+- **Endpoint: `GET /api/v1/reports`**
+
+    - **Description:** Generates a financial report.
+    - **Authorization:** Authenticated User
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Report generated successfully",
+          "data": {
+            "start_date": "2025-01-01",
+            "end_date": "2025-12-31",
+            "total_income": 24000.00,
+            "total_expense": 15000.00,
+            "net_income": 9000.00,
+            "spending_by_category": [
+              {
+                "category": "Groceries",
+                "total": 3000.00
+              },
+              {
+                "category": "Rent",
+                "total": 12000.00
+              }
+            ]
+          },
+          "error": null
+        }
+        ```
+
+- **Endpoint: `GET /api/v1/reports/export`**
+
+    - **Description:** Exports transaction data to a CSV file.
+    - **Authorization:** Authenticated User
+    - **Success Response (200 OK):**
+        - **Content-Type:** `text/csv`
+        - **Body:** (CSV file content)
+
+---
+
+### **`/api/v1/categories`**
+
+- **Endpoint: `POST /api/v1/categories/create`**
+
+    - **Description:** Creates a new transaction category.
+    - **Authorization:** Authenticated User
+    - **Request Body:**
+        ```json
+        {
+          "name": "Utilities",
+          "type": "expense"
+        }
+        ```
+    - **Success Response (201 Created):**
+        ```json
+        {
+          "success": true,
+          "message": "Category created successfully",
+          "data": {
+            "id": "e1f2g3h4-i5j6-k7l8-m9n0-o1p2q3r4s5t6",
+            "name": "Utilities",
+            "type": "expense"
+          },
+          "error": null
+        }
+        ```
+
+- **Endpoint: `GET /api/v1/categories`**
+
+    - **Description:** Retrieves all transaction categories.
+    - **Authorization:** Authenticated User
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Categories retrieved successfully",
+          "data": [
+            {
+              "id": "e1f2g3h4-i5j6-k7l8-m9n0-o1p2q3r4s5t6",
+              "name": "Utilities",
+              "type": "expense"
+            }
+          ],
+          "error": null
+        }
+        ```
+
+- **Endpoint: `PATCH /api/v1/categories/update/:id`**
+
+    - **Description:** Updates a transaction category.
+    - **Authorization:** Authenticated User
+    - **Request Body:**
+        ```json
+        {
+          "name": "Home Utilities"
+        }
+        ```
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Category updated successfully",
+          "data": {
+            "id": "e1f2g3h4-i5j6-k7l8-m9n0-o1p2q3r4s5t6",
+            "name": "Home Utilities",
+            "type": "expense"
+          },
+          "error": null
+        }
+        ```
+
+- **Endpoint: `DELETE /api/v1/categories/delete/:id`**
+
+    - **Description:** Deletes a transaction category.
+    - **Authorization:** Authenticated User
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Category deleted successfully",
+          "data": null,
+          "error": null
+        }
+        ```
+
+---
+
+### **`/api/v1/budgets`**
+
+- **Endpoint: `POST /api/v1/budgets/create`**
+
+    - **Description:** Creates a new budget.
+    - **Authorization:** Authenticated User
+    - **Request Body:**
+        ```json
+        {
+          "category_id": "e1f2g3h4-i5j6-k7l8-m9n0-o1p2q3r4s5t6",
+          "amount": 500.00,
+          "month": 10,
+          "year": 2025
+        }
+        ```
+    - **Success Response (201 Created):**
+        ```json
+        {
+          "success": true,
+          "message": "Budget created successfully",
+          "data": {
+            "id": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
+            "category_id": "e1f2g3h4-i5j6-k7l8-m9n0-o1p2q3r4s5t6",
+            "amount": 500.00,
+            "month": 10,
+            "year": 2025,
+            "created_at": "2025-10-09T10:00:00Z",
+            "updated_at": "2025-10-09T10:00:00Z"
+          },
+          "error": null
+        }
+        ```
+
+- **Endpoint: `GET /api/v1/budgets`**
+
+    - **Description:** Retrieves all budgets for the authenticated user.
+    - **Authorization:** Authenticated User
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Budgets retrieved successfully",
+          "data": [
+            {
+              "id": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
+              "category_id": "e1f2g3h4-i5j6-k7l8-m9n0-o1p2q3r4s5t6",
+              "amount": 500.00,
+              "month": 10,
+              "year": 2025,
+              "created_at": "2025-10-09T10:00:00Z",
+              "updated_at": "2025-10-09T10:00:00Z"
+            }
+          ],
+          "error": null
+        }
+        ```
+
+- **Endpoint: `PATCH /api/v1/budgets/update/:id`**
+
+    - **Description:** Updates a budget.
+    - **Authorization:** Authenticated User
+    - **Request Body:**
+        ```json
+        {
+          "amount": 550.00
+        }
+        ```
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Budget updated successfully",
+          "data": {
+            "id": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
+            "category_id": "e1f2g3h4-i5j6-k7l8-m9n0-o1p2q3r4s5t6",
+            "amount": 550.00,
+            "month": 10,
+            "year": 2025,
+            "created_at": "2025-10-09T10:00:00Z",
+            "updated_at": "2025-10-09T10:15:00Z"
+          },
+          "error": null
+        }
+        ```
+
+- **Endpoint: `DELETE /api/v1/budgets/delete/:id`**
+
+    - **Description:** Deletes a budget.
+    - **Authorization:** Authenticated User
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Budget deleted successfully",
+          "data": null,
+          "error": null
+        }
+        ```
+
+---
+
+### **`/api/v1/recurring-transactions`**
+
+- **Endpoint: `POST /api/v1/recurring-transactions/create`**
+
+    - **Description:** Creates a new recurring transaction.
+    - **Authorization:** Authenticated User
+    - **Request Body:**
+        ```json
+        {
+          "account_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+          "category_id": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+          "description": "Netflix Subscription",
+          "amount": 15.99,
+          "type": "expense",
+          "frequency": "monthly",
+          "start_date": "2025-10-15"
+        }
+        ```
+    - **Success Response (201 Created):**
+        ```json
+        {
+          "success": true,
+          "message": "Recurring transaction created successfully",
+          "data": {
+            "id": "g1h2i3j4-k5l6-m7n8-o9p0-q1r2s3t4u5v6",
+            "account_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+            "category_id": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+            "description": "Netflix Subscription",
+            "amount": 15.99,
+            "type": "expense",
+            "frequency": "monthly",
+            "start_date": "2025-10-15",
+            "created_at": "2025-10-09T10:00:00Z",
+            "updated_at": "2025-10-09T10:00:00Z"
+          },
+          "error": null
+        }
+        ```
+
+- **Endpoint: `GET /api/v1/recurring-transactions`**
+
+    - **Description:** Retrieves all recurring transactions for the authenticated user.
+    - **Authorization:** Authenticated User
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Recurring transactions retrieved successfully",
+          "data": [
+            {
+              "id": "g1h2i3j4-k5l6-m7n8-o9p0-q1r2s3t4u5v6",
+              "account_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+              "category_id": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+              "description": "Netflix Subscription",
+              "amount": 15.99,
+              "type": "expense",
+              "frequency": "monthly",
+              "start_date": "2025-10-15",
+              "created_at": "2025-10-09T10:00:00Z",
+              "updated_at": "2025-10-09T10:00:00Z"
+            }
+          ],
+          "error": null
+        }
+        ```
+
+- **Endpoint: `PATCH /api/v1/recurring-transactions/update/:id`**
+
+    - **Description:** Updates a recurring transaction.
+    - **Authorization:** Authenticated User
+    - **Request Body:**
+        ```json
+        {
+          "amount": 16.99
+        }
+        ```
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Recurring transaction updated successfully",
+          "data": {
+            "id": "g1h2i3j4-k5l6-m7n8-o9p0-q1r2s3t4u5v6",
+            "account_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+            "category_id": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+            "description": "Netflix Subscription",
+            "amount": 16.99,
+            "type": "expense",
+            "frequency": "monthly",
+            "start_date": "2025-10-15",
+            "created_at": "2025-10-09T10:00:00Z",
+            "updated_at": "2025-10-09T10:20:00Z"
+          },
+          "error": null
+        }
+        ```
+
+- **Endpoint: `DELETE /api/v1/recurring-transactions/delete/:id`**
+
+    - **Description:** Deletes a recurring transaction.
+    - **Authorization:** Authenticated User
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Recurring transaction deleted successfully",
+          "data": null,
+          "error": null
+        }
+        ```
+
 
 ## 7. Authentication & Authorization
 
