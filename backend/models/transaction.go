@@ -25,9 +25,8 @@ type Transaction struct {
 	Type                   TransactionType `json:"type"`
 	TransactionDate        time.Time       `json:"transactionDate"`
 	Note                   sql.NullString  `json:"note,omitempty"`
-	RecurringTransactionID uuid.NullUUID   `json:"recurringTransactionId,omitempty"`
 	CreatedAt              time.Time       `json:"createdAt"`
 	UpdatedAt              time.Time       `json:"updatedAt"`
 }
 
-var TransactionColumns = "id, user_id, account_id, category_id, description, amount, type, transaction_date, note, recurring_transaction_id, created_at, updated_at"
+var TransactionColumns = "id, user_id, account_id, category_id, description, amount, type, transaction_date, note, created_at, updated_at"

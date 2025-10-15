@@ -254,6 +254,13 @@ graph TD
 |email|
 |google|
 
+#### `recurring_frequency`
+
+|Value|
+|---|
+|monthly|
+|yearly|
+
 ---
 ### 👤 `users` Table
 
@@ -313,12 +320,30 @@ graph TD
 
 ---
 
+### 🔁 `recurring_transactions` Table
+
+|Column|Type|Constraints / Default|
+|---|---|---|
+|id|UUID|Primary Key, Default: `gen_random_uuid()`|
+|user_id|UUID|Foreign Key → `users(id)`, On Delete CASCADE|
+|account_id|UUID|Foreign Key → `accounts(id)`, On Delete CASCADE|
+|category_id|UUID|Foreign Key → `categories(id)`, On Delete RESTRICT|
+|description|VARCHAR(255)|Not Null|
+|amount|NUMERIC(19,4)|Not Null|
+|type|transaction_type|Not Null|
+|recurring_frequency|recurring_frequency|Not Null|
+|recurring_date|INTEGER|Not Null|
+|created_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
+|updated_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
+
+---
+
 ### ⚡ Indexes
 
-| Index Name                    | Columns                            |
-| ----------------------------- | ---------------------------------- |
+| Index Name | Columns |
+| --- | --- |
 | idx_transactions_user_id_date | `(user_id, transaction_date DESC)` |
-| idx_accounts_user_id          | `(user_id)`                        |
+| idx_accounts_user_id | `(user_id)` |
 
 ---
 
@@ -1175,8 +1200,8 @@ All API responses will adhere to the following structure:
           "description": "Netflix Subscription",
           "amount": 15.99,
           "type": "expense",
-          "frequency": "monthly",
-          "start_date": "2025-10-15"
+          "recurring_frequency": "monthly",
+          "recurring_date": 15
         }
         ```
     - **Success Response (201 Created):**
@@ -1191,8 +1216,8 @@ All API responses will adhere to the following structure:
             "description": "Netflix Subscription",
             "amount": 15.99,
             "type": "expense",
-            "frequency": "monthly",
-            "start_date": "2025-10-15",
+            "recurring_frequency": "monthly",
+            "recurring_date": 15,
             "created_at": "2025-10-09T10:00:00Z",
             "updated_at": "2025-10-09T10:00:00Z"
           },
@@ -1217,8 +1242,8 @@ All API responses will adhere to the following structure:
               "description": "Netflix Subscription",
               "amount": 15.99,
               "type": "expense",
-              "frequency": "monthly",
-              "start_date": "2025-10-15",
+              "recurring_frequency": "monthly",
+              "recurring_date": 15,
               "created_at": "2025-10-09T10:00:00Z",
               "updated_at": "2025-10-09T10:00:00Z"
             }
@@ -1249,8 +1274,8 @@ All API responses will adhere to the following structure:
             "description": "Netflix Subscription",
             "amount": 16.99,
             "type": "expense",
-            "frequency": "monthly",
-            "start_date": "2025-10-15",
+            "recurring_frequency": "monthly",
+            "recurring_date": 15,
             "created_at": "2025-10-09T10:00:00Z",
             "updated_at": "2025-10-09T10:20:00Z"
           },

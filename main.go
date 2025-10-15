@@ -9,6 +9,7 @@ import (
 
 	"github.com/rahulcodepython/finance-tracker-backend/backend/config"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/pkg/scheduler"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/routes"
 
 	"github.com/gofiber/fiber/v2"
@@ -20,6 +21,8 @@ func main() {
 	db := database.Connect(cfg)
 
 	database.CreateTables(db)
+
+	scheduler.StartScheduler(db)
 
 	server := fiber.New()
 

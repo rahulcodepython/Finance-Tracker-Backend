@@ -10,7 +10,7 @@ This is the backend API for the Finance Tracker application. It is a secure, hig
 - Data aggregation endpoints for dashboard visualization and advanced reporting.
 - Implementation of security best practices, including JWT authorization, input sanitization, CORS, rate limiting, and password hashing.
 - Containerization of the application using Docker for streamlined deployment and development.
-- Management of recurring transactions via a background scheduler.
+- Management of recurring transactions via a background scheduler. The scheduler runs daily to check for and create transactions based on monthly or yearly frequencies.
 - Data export functionality (CSV).
 
 ## Tech Stack
@@ -19,6 +19,7 @@ This is the backend API for the Finance Tracker application. It is a secure, hig
 - **Fiber:** A fast and expressive web framework for Golang.
 - **PostgreSQL:** The chosen relational database for data storage.
 - **database/sql:** The standard Go package for interacting with SQL databases.
+- **gocron:** A job scheduling package for Go.
 - **Docker:** Used for containerization and to ensure a consistent development and deployment environment.
 
 ## API Endpoints

@@ -2,7 +2,6 @@ package v1
 
 import (
 	"database/sql"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -22,14 +21,13 @@ import (
 // @Router /recurring-transactions/create [post]
 func CreateRecurringTransaction(c *fiber.Ctx) error {
 	type CreateRecurringTransactionInput struct {
-		AccountID   string  `json:"accountId"`
-		CategoryID  string  `json:"categoryId"`
-		Description string  `json:"description"`
-		Amount      float64 `json:"amount"`
-		Type        string  `json:"type"`
-		Frequency   string  `json:"frequency"`
-		StartDate   string  `json:"startDate"`
-		EndDate     string  `json:"endDate"`
+		AccountID          string                    `json:"accountId"`
+		CategoryID         string                    `json:"categoryId"`
+		Description        string                    `json:"description"`
+		Amount             float64                   `json:"amount"`
+		Type               string                    `json:"type"`
+		RecurringFrequency models.RecurringFrequency `json:"recurringFrequency"`
+		RecurringDate      int                       `json:"recurringDate"`
 	}
 
 	var input CreateRecurringTransactionInput
@@ -53,19 +51,9 @@ func CreateRecurringTransaction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
 	}
 
-	startDate, err := time.Parse("2006-01-02", input.StartDate)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid start date format", "error": err.Error()})
-	}
-
-	endDate, err := time.Parse("2006-01-02", input.EndDate)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid end date format", "error": err.Error()})
-	}
-
 	db := c.Locals("db").(*sql.DB)
 
-	recurringTransaction, err := services.CreateRecurringTransaction(userID, accountID, categoryID, input.Description, input.Amount, models.TransactionType(input.Type), input.Frequency, startDate, endDate, db)
+	recurringTransaction, err := services.CreateRecurringTransaction(userID, accountID, categoryID, input.Description, input.Amount, models.TransactionType(input.Type), input.RecurringFrequency, input.RecurringDate, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to create recurring transaction", "error": err.Error()})
 	}
@@ -110,14 +98,13 @@ func GetRecurringTransactions(c *fiber.Ctx) error {
 // @Router /recurring-transactions/update/{id} [patch]
 func UpdateRecurringTransaction(c *fiber.Ctx) error {
 	type UpdateRecurringTransactionInput struct {
-		AccountID   string  `json:"accountId"`
-		CategoryID  string  `json:"categoryId"`
-		Description string  `json:"description"`
-		Amount      float64 `json:"amount"`
-		Type        string  `json:"type"`
-		Frequency   string  `json:"frequency"`
-		StartDate   string  `json:"startDate"`
-		EndDate     string  `json:"endDate"`
+		AccountID          string                    `json:"accountId"`
+		CategoryID         string                    `json:"categoryId"`
+		Description        string                    `json:"description"`
+		Amount             float64                   `json:"amount"`
+		Type               string                    `json:"type"`
+		RecurringFrequency models.RecurringFrequency `json:"recurringFrequency"`
+		RecurringDate      int                       `json:"recurringDate"`
 	}
 
 	var input UpdateRecurringTransactionInput
@@ -141,19 +128,9 @@ func UpdateRecurringTransaction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
 	}
 
-	startDate, err := time.Parse("2006-01-02", input.StartDate)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid start date format", "error": err.Error()})
-	}
-
-	endDate, err := time.Parse("2006-01-02", input.EndDate)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid end date format", "error": err.Error()})
-	}
-
 	db := c.Locals("db").(*sql.DB)
 
-	recurringTransaction, err := services.UpdateRecurringTransaction(recurringTransactionID, accountID, categoryID, input.Description, input.Amount, models.TransactionType(input.Type), input.Frequency, startDate, endDate, db)
+	recurringTransaction, err := services.UpdateRecurringTransaction(recurringTransactionID, accountID, categoryID, input.Description, input.Amount, models.TransactionType(input.Type), input.RecurringFrequency, input.RecurringDate, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to update recurring transaction", "error": err.Error()})
 	}
