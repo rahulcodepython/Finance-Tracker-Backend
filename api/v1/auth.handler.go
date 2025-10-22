@@ -2,12 +2,12 @@ package v1
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"io/ioutil"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/config"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
@@ -34,7 +34,7 @@ func GoogleLogin(c *fiber.Ctx) error {
 func GoogleCallback(c *fiber.Ctx) error {
 	code := c.Query("code")
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 	cfg := c.Locals("cfg").(*config.Config)
 
 	token, err := cfg.GoogleOauthConfig.Exchange(context.Background(), code)
@@ -89,7 +89,7 @@ func Register(c *fiber.Ctx) error {
 		return utils.BadInternalResponse(c, err, "Invalid request")
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 	cfg := c.Locals("cfg").(*config.Config)
 
 	user, token, err := services.Register(input.Name, input.Email, input.Password, db, cfg)
@@ -121,7 +121,7 @@ func Login(c *fiber.Ctx) error {
 		return utils.BadInternalResponse(c, err, "Invalid request")
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 	cfg := c.Locals("cfg").(*config.Config)
 
 	user, token, err := services.Login(input.Email, input.Password, db, cfg)
@@ -142,7 +142,7 @@ func Login(c *fiber.Ctx) error {
 // @Router /auth/profile [get]
 func GetProfile(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	user, err := services.GetProfile(userID, db)
 	if err != nil {
@@ -175,7 +175,7 @@ func ChangePassword(c *fiber.Ctx) error {
 	}
 
 	userID := c.Locals("user_id").(string)
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	if err := services.ChangePassword(userID, input.CurrentPassword, input.NewPassword, db); err != nil {
 		return utils.InternelServerError(c, err, "Failed to change password")

@@ -1,23 +1,36 @@
 package routes
 
 import (
-	"database/sql"
-
 	"github.com/gofiber/fiber/v2"
 	v1 "github.com/rahulcodepython/finance-tracker-backend/api/v1"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/middleware"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
 func Setup(app *fiber.App) {
+	app.Use(middleware.Logger())
+
 	api := app.Group("/api")
 
 	v1Api := api.Group("/v1")
 
 	v1Api.Get("/", func(c *fiber.Ctx) error {
-		db := c.Locals("db").(*sql.DB)
-		utils.Ping(db)
-		return utils.OKResponse(c, "Welcome to the Finance Tracker API", nil)
+		db := database.DB
+		// log.Println(db) // This is good for debugging but noisy
+
+		// Call the modified Ping function and check its error
+		if err := utils.Ping(db); err != nil {
+			// If ping fails, return a 503 Service Unavailable error
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+				"success": false,
+				"message": "Database connection error",
+				"error":   err.Error(),
+			})
+		}
+
+		// If ping is successful, return the normal response
+		return c.JSON(fiber.Map{"success": true, "message": "Welcome to the Finance Tracker API"})
 	})
 
 	auth := v1Api.Group("/auth")

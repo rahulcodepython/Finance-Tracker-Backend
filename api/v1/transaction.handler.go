@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
 )
@@ -23,13 +24,13 @@ import (
 // @Router /transactions/create [post]
 func CreateTransaction(c *fiber.Ctx) error {
 	type CreateTransactionInput struct {
-		AccountID   string    `json:"accountId"`
-		CategoryID  string    `json:"categoryId"`
-		Description string    `json:"description"`
-		Amount      float64   `json:"amount"`
-		Type        string    `json:"type"`
-		Date        string    `json:"date"`
-		Note        string    `json:"note"`
+		AccountID   string  `json:"accountId"`
+		CategoryID  string  `json:"categoryId"`
+		Description string  `json:"description"`
+		Amount      float64 `json:"amount"`
+		Type        string  `json:"type"`
+		Date        string  `json:"date"`
+		Note        string  `json:"note"`
 	}
 
 	var input CreateTransactionInput
@@ -62,7 +63,7 @@ func CreateTransaction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid date format", "error": err.Error()})
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	transaction, err := services.CreateTransaction(userID, accountID, categoryID, input.Description, input.Amount, models.TransactionType(input.Type), transactionDate, sql.NullString{String: input.Note, Valid: input.Note != ""}, db)
 	if err != nil {
@@ -100,7 +101,7 @@ func GetTransactions(c *fiber.Ctx) error {
 	startDate := c.Query("startDate")
 	endDate := c.Query("endDate")
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	transactions, err := services.GetTransactions(userID, page, limit, description, categoryID, accountID, startDate, endDate, db)
 	if err != nil {
@@ -123,13 +124,13 @@ func GetTransactions(c *fiber.Ctx) error {
 // @Router /transactions/update/{id} [patch]
 func UpdateTransaction(c *fiber.Ctx) error {
 	type UpdateTransactionInput struct {
-		AccountID   string    `json:"accountId"`
-		CategoryID  string    `json:"categoryId"`
-		Description string    `json:"description"`
-		Amount      float64   `json:"amount"`
-		Type        string    `json:"type"`
-		Date        string    `json:"date"`
-		Note        string    `json:"note"`
+		AccountID   string  `json:"accountId"`
+		CategoryID  string  `json:"categoryId"`
+		Description string  `json:"description"`
+		Amount      float64 `json:"amount"`
+		Type        string  `json:"type"`
+		Date        string  `json:"date"`
+		Note        string  `json:"note"`
 	}
 
 	var input UpdateTransactionInput
@@ -162,7 +163,7 @@ func UpdateTransaction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid date format", "error": err.Error()})
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	transaction, err := services.UpdateTransaction(transactionID, accountID, categoryID, input.Description, input.Amount, models.TransactionType(input.Type), transactionDate, sql.NullString{String: input.Note, Valid: input.Note != ""}, db)
 	if err != nil {
@@ -187,7 +188,7 @@ func DeleteTransaction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid transaction ID", "error": err.Error()})
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	if err := services.DeleteTransaction(transactionID, db); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to delete transaction", "error": err.Error()})
@@ -214,7 +215,7 @@ func GetAggregateData(c *fiber.Ctx) error {
 	startDate := c.Query("startDate")
 	endDate := c.Query("endDate")
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	data, err := services.GetAggregateData(userID, startDate, endDate, db)
 	if err != nil {

@@ -1,10 +1,9 @@
 package v1
 
 import (
-	"database/sql"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
 )
@@ -36,7 +35,7 @@ func CreateAccount(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	account, err := services.CreateAccount(userID, input.Name, models.AccountType(input.Type), db)
 	if err != nil {
@@ -60,7 +59,7 @@ func GetAccounts(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	accounts, err := services.GetAccounts(userID, db)
 	if err != nil {
@@ -98,7 +97,7 @@ func UpdateAccount(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid account ID", "error": err.Error()})
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	account, err := services.UpdateAccount(accountID, input.Name, models.AccountType(input.Type), db)
 	if err != nil {
@@ -123,7 +122,7 @@ func DeleteAccount(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid account ID", "error": err.Error()})
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	if err := services.DeleteAccount(accountID, db); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to delete account", "error": err.Error()})
@@ -146,7 +145,7 @@ func GetTotalBalance(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	totalBalance, err := services.GetTotalBalance(userID, db)
 	if err != nil {

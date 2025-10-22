@@ -12,6 +12,8 @@ import (
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
+var DB *sql.DB
+
 func Connect(cfg *config.Config) *sql.DB {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=Asia/Shanghai",
 		cfg.Database.DBHost,
@@ -21,7 +23,10 @@ func Connect(cfg *config.Config) *sql.DB {
 		cfg.Database.DBPort,
 		cfg.Database.DBSSMode,
 	)
-	db, err := sql.Open("postgres", dsn)
+
+	var err error
+
+	DB, err = sql.Open("postgres", dsn)
 	// This checks if an error occurred while opening the database connection.
 	if err != nil {
 		// If an error occurs, a message is logged.
@@ -31,10 +36,10 @@ func Connect(cfg *config.Config) *sql.DB {
 	}
 
 	// PingDB() is called to check if the database connection is alive.
-	utils.Ping(db)
+	utils.Ping(DB)
 
 	// The database connection is returned.
-	return db
+	return DB
 }
 
 func CreateTables(db *sql.DB) {

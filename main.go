@@ -7,12 +7,11 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/config"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/pkg/scheduler"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/routes"
-
-	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
@@ -27,7 +26,6 @@ func main() {
 	server := fiber.New()
 
 	server.Use(func(c *fiber.Ctx) error {
-		c.Locals("db", db)
 		c.Locals("cfg", cfg)
 		return c.Next()
 	})
@@ -69,7 +67,7 @@ func main() {
 	// A message is printed to the console to indicate that cleanup tasks are running.
 	fmt.Println("Running cleanup tasks...")
 	// db.Close() closes the database connection.
-	_ = db.Close()
+	defer db.Close()
 
 	// A message is printed to the console to indicate that the server has shut down successfully.
 	fmt.Println("Fiber was successful shutdown.")

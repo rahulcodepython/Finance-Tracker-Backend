@@ -1,11 +1,11 @@
 package v1
 
 import (
-	"database/sql"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
 )
 
@@ -47,7 +47,7 @@ func CreateBudget(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid month format", "error": err.Error()})
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	budget, err := services.CreateBudget(userID, categoryID, input.Amount, month, db)
 	if err != nil {
@@ -71,7 +71,7 @@ func GetBudgets(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	budgets, err := services.GetBudgets(userID, db)
 	if err != nil {
@@ -120,7 +120,7 @@ func UpdateBudget(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid month format", "error": err.Error()})
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	budget, err := services.UpdateBudget(budgetID, categoryID, input.Amount, month, db)
 	if err != nil {
@@ -145,7 +145,7 @@ func DeleteBudget(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid budget ID", "error": err.Error()})
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	if err := services.DeleteBudget(budgetID, db); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to delete budget", "error": err.Error()})

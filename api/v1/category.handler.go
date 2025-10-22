@@ -1,10 +1,9 @@
 package v1
 
 import (
-	"database/sql"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
 )
@@ -31,7 +30,7 @@ func CreateCategory(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	category, err := services.CreateCategory(input.Name, models.TransactionType(input.Type), db)
 	if err != nil {
@@ -50,7 +49,7 @@ func CreateCategory(c *fiber.Ctx) error {
 // @Success 200 {object} map[string]interface{} "Categories retrieved successfully"
 // @Router /categories [get]
 func GetCategories(c *fiber.Ctx) error {
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 	categories, err := services.GetCategories(db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to get categories", "error": err.Error()})
@@ -87,7 +86,7 @@ func UpdateCategory(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	category, err := services.UpdateCategory(categoryID, input.Name, models.TransactionType(input.Type), db)
 	if err != nil {
@@ -112,7 +111,7 @@ func DeleteCategory(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	if err := services.DeleteCategory(categoryID, db); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to delete category", "error": err.Error()})

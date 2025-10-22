@@ -1,10 +1,9 @@
 package v1
 
 import (
-	"database/sql"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
 )
 
@@ -26,7 +25,7 @@ func GenerateReport(c *fiber.Ctx) error {
 	from := c.Query("from")
 	to := c.Query("to")
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	report, err := services.GenerateReport(userID, from, to, db)
 	if err != nil {
@@ -52,7 +51,7 @@ func ExportTransactions(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
 	}
 
-	db := c.Locals("db").(*sql.DB)
+	db := database.DB
 
 	c.Set("Content-Type", "text/csv")
 	c.Set("Content-Disposition", "attachment; filename=transactions.csv")

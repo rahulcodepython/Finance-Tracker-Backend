@@ -14,12 +14,6 @@ type serverConfig struct {
 	Port string
 }
 
-type googleOAuth2Config struct {
-	RedirectUrl  string
-	ClientId     string
-	ClientSecret string
-}
-
 type database struct {
 	DBHost     string
 	DBUser     string
@@ -62,11 +56,11 @@ func LoadConfig() *Config {
 
 	return &Config{
 		ServerConfig: serverConfig{
-			Host: parseEnv("SERVER_HOST", "localhost"),
-			Port: parseEnv("SERVER_PORT", "8080"),
+			Host: parseEnv("HOST", "localhost"),
+			Port: parseEnv("PORT", "8000"),
 		},
 		GoogleOauthConfig: &oauth2.Config{
-			RedirectURL:  parseEnv("GOOGLE_REDIRECT_URL", ""),
+			RedirectURL:  parseEnv("GOOGLE_OAUTH_REDIRECT_URL", ""),
 			ClientID:     parseEnv("GOOGLE_CLIENT_ID", ""),
 			ClientSecret: parseEnv("GOOGLE_CLIENT_SECRET", ""),
 			Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"},
@@ -75,8 +69,8 @@ func LoadConfig() *Config {
 		Database: database{
 			DBHost:     parseEnv("DB_HOST", "localhost"),
 			DBUser:     parseEnv("DB_USER", "postgres"),
-			DBPassword: parseEnv("DB_PASSWORD", "postgres"),
-			DBName:     parseEnv("DB_NAME", "finance-tracker"),
+			DBPassword: parseEnv("DB_PASSWORD", "admin"),
+			DBName:     parseEnv("DB_NAME", "finance_tracker"),
 			DBPort:     parseEnv("DB_PORT", "5432"),
 			DBSSMode:   parseEnv("DB_SSL_MODE", "disable"),
 		},
