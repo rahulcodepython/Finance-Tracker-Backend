@@ -267,9 +267,9 @@ graph TD
 |Column|Type|Constraints / Default|
 |---|---|---|
 |id|UUID|Primary Key, Default: `gen_random_uuid()`|
-|full_name|VARCHAR(100)|Not Null|
+|name|VARCHAR(100)|Not Null|
 |email|VARCHAR(255)|Unique, Not Null|
-|password_hash|VARCHAR(255)|Nullable|
+|password|VARCHAR(255)|Nullable|
 |provider|auth_provider|Not Null, Default: `'email'`|
 |created_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
 
@@ -309,7 +309,7 @@ graph TD
 |id|UUID|Primary Key, Default: `gen_random_uuid()`|
 |user_id|UUID|Foreign Key → `users(id)`, On Delete CASCADE|
 |account_id|UUID|Foreign Key → `accounts(id)`, On Delete CASCADE|
-|category_id|UUID|Foreign Key → `categories(id)`, On Delete RESTRICT|
+|category_id|UUID|Foreign Key → `categories(id)`, On Delete RESTRICT, Nullable|
 |description|VARCHAR(255)|Not Null|
 |amount|NUMERIC(19,4)|Not Null|
 |type|transaction_type|Not Null|
@@ -338,12 +338,38 @@ graph TD
 
 ---
 
+### 💰 `budgets` Table
+
+|Column|Type|Constraints / Default|
+|---|---|---|
+|id|UUID|Primary Key, Default: `gen_random_uuid()`|
+|user_id|UUID|Foreign Key → `users(id)`, On Delete CASCADE|
+|category_id|UUID|Foreign Key → `categories(id)`, On Delete CASCADE|
+|amount|NUMERIC(19,4)|Not Null|
+|month|TIMESTAMPTZ|Not Null|
+|created_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
+|updated_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
+
+---
+
 ### ⚡ Indexes
 
 | Index Name | Columns |
 | --- | --- |
 | idx_transactions_user_id_date | `(user_id, transaction_date DESC)` |
 | idx_accounts_user_id | `(user_id)` |
+
+---
+
+### 🔐 `jwt_tokens` Table
+
+|Column|Type|Constraints / Default|
+|---|---|---|
+|id|UUID|Primary Key, Default: `gen_random_uuid()`|
+|user_id|UUID|Foreign Key → `users(id)`, On Delete CASCADE, Unique|
+|token|TEXT|Unique, Not Null|
+|expires_at|TIMESTAMPTZ|Not Null|
+|created_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
 
 ---
 
@@ -1302,7 +1328,7 @@ All API responses will adhere to the following structure:
 
 ### 7.1. Authentication Strategy
 
-The system employs a JWT-based authentication strategy for its stateless API.
+The system employs a JWT-based authentication strategy for its stateless API, with enhanced token management.
 
 **Flow:**
 
@@ -1310,17 +1336,21 @@ The system employs a JWT-based authentication strategy for its stateless API.
     
 2. The server validates the credentials/token.
     
-3. If valid, the server generates a signed JWT containing a payload with the `user_id` and an expiration timestamp (`exp`).
+3. If valid, the server checks the `jwt_tokens` table for an existing valid token for the user.
     
-4. The server sends this JWT back to the client.
+4. If an existing valid token is found, it is returned. If the existing token is expired, it is removed.
     
-5. The client application stores the JWT securely (e.g., in an HttpOnly cookie or secure storage).
+5. If no valid token exists (or the previous one was removed), a new signed JWT is generated containing a payload with the `user_id` and an expiration timestamp (`exp`). This new token is stored in the `jwt_tokens` table (replacing any old token for that user).
     
-6. For all subsequent requests to protected endpoints, the client must include the JWT in the `Authorization` header with the `Bearer` scheme (`Authorization: Bearer <token>`).
+6. The server sends this JWT back to the client.
     
-7. A middleware on the server intercepts each request, validates the JWT's signature and expiration, and if valid, extracts the `user_id` to process the request within the user's scope.
+7. The client application stores the JWT securely (e.g., in an HttpOnly cookie or secure storage).
     
-8. Tokens will have a short lifespan (e.g., 1 hour), and a refresh token mechanism will be implemented for a seamless user experience.
+8. For all subsequent requests to protected endpoints, the client must include the JWT in the `Authorization` header with the `Bearer` scheme (`Authorization: Bearer <token>`).
+    
+9. A middleware on the server intercepts each request, validates the JWT's signature and expiration, and crucially, checks if the token exists and is valid in the `jwt_tokens` table. If valid, it extracts the `user_id` to process the request within the user's scope.
+    
+10. Tokens will have a short lifespan (e.g., 1 hour), and a refresh token mechanism will be implemented for a seamless user experience.
     
 
 ### 7.2. Authorization Strategy

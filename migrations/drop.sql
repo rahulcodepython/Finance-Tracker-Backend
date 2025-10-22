@@ -1,0 +1,11 @@
+DROP INDEX IF EXISTS idx_accounts_user_id;
+DROP INDEX IF EXISTS idx_transactions_user_id_date;
+DROP TABLE IF EXISTS recurring_transactions;
+DROP TABLE IF EXISTS transactions;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS accounts;
+DROP TABLE IF EXISTS users;
+DROP TYPE IF EXISTS recurring_frequency;
+DROP TYPE IF EXISTS transaction_type;
+DROP TYPE IF EXISTS account_type;
+DROP TYPE IF EXISTS auth_provider;

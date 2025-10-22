@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"os"
-	"strings"
 
 	_ "github.com/lib/pq"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/config"
@@ -40,45 +38,4 @@ func Connect(cfg *config.Config) *sql.DB {
 
 	// The database connection is returned.
 	return DB
-}
-
-func CreateTables(db *sql.DB) {
-	sqlFilePath := "migrations/schema.sql"
-	content, err := os.ReadFile(sqlFilePath)
-	if err != nil {
-		log.Fatalf("Error reading SQL file %s: %v", sqlFilePath, err)
-	}
-
-	// 3. SPLIT INTO INDIVIDUAL STATEMENTS
-	queries := strings.Split(string(content), ";")
-
-	// 4. EXECUTE EACH STATEMENT USING db.Exec()
-	for _, query := range queries {
-		trimmedQuery := strings.TrimSpace(query)
-
-		// Skip empty statements
-		if trimmedQuery == "" {
-			continue
-		}
-
-		// Execute the command. db.Exec() is for statements that don't return rows.
-		_, err := db.Exec(trimmedQuery)
-		if err != nil {
-			// If a statement fails, we log the error and the problematic query, then stop.
-			log.Fatalf("Failed to execute command:\n%s\n\nError: %v", trimmedQuery, err)
-		}
-
-		// Optional: Log successful execution of each statement
-		// To avoid printing long CREATE TABLE statements, we can just print a snippet.
-		getQuerySnippet := func(query string) string {
-			words := strings.Fields(query)
-			if len(words) > 5 {
-				return strings.Join(words[:5], " ")
-			}
-			return query
-		}
-		log.Printf("Successfully executed statement starting with: \"%s...\"", getQuerySnippet(trimmedQuery))
-	}
-
-	fmt.Println("\nDatabase schema setup complete.")
 }

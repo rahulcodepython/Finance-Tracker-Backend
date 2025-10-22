@@ -32,10 +32,20 @@ func Register(name, email, password string, db *sql.DB, cfg *config.Config) (*mo
 		return nil, "", err
 	}
 
-	token, err := utils.GenerateToken(user.ID.String(), cfg)
+	token, expiresAt, err := utils.GenerateToken(user.ID.String(), cfg)
 	if err != nil {
 		return nil, "", err
 	}
+
+	jwtToken := models.JwtToken{
+		ID:        uuid.New(),
+		UserID:    user.ID,
+		Token:     token,
+		ExpiresAt: expiresAt,
+		CreatedAt: time.Now(),
+	}
+
+	repository.CreateJwtToken(db, &jwtToken)
 
 	return user, token, nil
 }
@@ -50,10 +60,36 @@ func Login(email, password string, db *sql.DB, cfg *config.Config) (*models.User
 		return nil, "", errors.New("invalid email or password")
 	}
 
-	token, err := utils.GenerateToken(user.ID.String(), cfg)
+	jwtToken, err := repository.GetJwtTokenByUserID(db, user.ID)
 	if err != nil {
 		return nil, "", err
 	}
+
+	if jwtToken != nil && jwtToken.ExpiresAt.Before(time.Now()) {
+		return user, jwtToken.Token, nil
+	}
+
+	if jwtToken.ExpiresAt.After(time.Now()) {
+		err := repository.DeleteJwtTokenByUserID(db, user.ID)
+		if err != nil {
+			return nil, "", err
+		}
+	}
+
+	token, expiresAt, err := utils.GenerateToken(user.ID.String(), cfg)
+	if err != nil {
+		return nil, "", err
+	}
+
+	newJwtToken := models.JwtToken{
+		ID:        uuid.New(),
+		UserID:    user.ID,
+		Token:     token,
+		ExpiresAt: expiresAt,
+		CreatedAt: time.Now(),
+	}
+
+	repository.CreateJwtToken(db, &newJwtToken)
 
 	return user, token, nil
 }
@@ -99,10 +135,14 @@ func GoogleLogin(email, fullName string, db *sql.DB, cfg *config.Config) (*model
 		}
 	}
 
-	token, err := utils.GenerateToken(user.ID.String(), cfg)
+	token, expiresAt, err := utils.GenerateToken(user.ID.String(), cfg)
 	if err != nil {
 		return nil, "", err
 	}
+
+	//  create the token
+	x := expiresAt
+	_ = x
 
 	return user, token, nil
 }

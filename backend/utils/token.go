@@ -8,21 +8,27 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func GenerateToken(userID string, cfg *config.Config) (string, error) {
+func GenerateToken(userID string, cfg *config.Config) (string, time.Time, error) {
 	secret := cfg.JWT.JWTSecret
-	expiresAt := cfg.JWT.JWTExpiresAt
+	expiresIn := cfg.JWT.JWTExpiresIn
 
-	expirationTime, err := time.ParseDuration(expiresAt)
+	expirationTime, err := time.ParseDuration(expiresIn)
 	if err != nil {
-		return "", err
+		return "", time.Time{}, err
 	}
 
+	expiresAt := time.Now().Add(expirationTime)
 	claims := jwt.MapClaims{
 		"user_id": userID,
-		"exp":     time.Now().Add(expirationTime).Unix(),
+		"exp":     expiresAt.Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString([]byte(secret))
+	tokenString, err := token.SignedString([]byte(secret))
+	if err != nil {
+		return "", time.Time{}, err
+	}
+
+	return tokenString, expiresAt, nil
 }

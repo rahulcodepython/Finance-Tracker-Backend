@@ -25,7 +25,7 @@ type database struct {
 
 type jwt struct {
 	JWTSecret    string
-	JWTExpiresAt string
+	JWTExpiresIn string
 }
 
 type Config struct {
@@ -76,7 +76,7 @@ func LoadConfig() *Config {
 		},
 		JWT: jwt{
 			JWTSecret:    parseEnv("JWT_SECRET", "secret"),
-			JWTExpiresAt: parseEnv("JWT_EXPIRES_AT", "1h"),
+			JWTExpiresIn: parseEnv("JWT_EXPIRES_IN", "1h"),
 		},
 	}
 }

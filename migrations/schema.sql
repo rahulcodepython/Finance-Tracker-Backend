@@ -5,9 +5,9 @@ CREATE TYPE recurring_frequency AS ENUM ('monthly', 'yearly');
 
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    full_name VARCHAR(100) NOT NULL,
+    name VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NULL,
+    password VARCHAR(255) NULL,
     provider auth_provider NOT NULL DEFAULT 'email',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -34,7 +34,7 @@ CREATE TABLE transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-    category_id UUID NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
+    category_id UUID REFERENCES categories(id) ON DELETE RESTRICT,
     description VARCHAR(255) NOT NULL,
     amount NUMERIC(19, 4) NOT NULL,
     type transaction_type NOT NULL,
@@ -58,17 +58,24 @@ CREATE TABLE recurring_transactions (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE budgets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    category_id UUID NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+    amount NUMERIC(19, 4) NOT NULL,
+    month TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE INDEX idx_transactions_user_id_date ON transactions (user_id, transaction_date DESC);
 CREATE INDEX idx_accounts_user_id ON accounts (user_id);
 
-DROP INDEX IF EXISTS idx_accounts_user_id;
-DROP INDEX IF EXISTS idx_transactions_user_id_date;
-DROP TABLE IF EXISTS recurring_transactions;
-DROP TABLE IF EXISTS transactions;
-DROP TABLE IF EXISTS categories;
-DROP TABLE IF EXISTS accounts;
-DROP TABLE IF EXISTS users;
-DROP TYPE IF EXISTS recurring_frequency;
-DROP TYPE IF EXISTS transaction_type;
-DROP TYPE IF EXISTS account_type;
-DROP TYPE IF EXISTS auth_provider;
+CREATE TABLE jwt_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token TEXT UNIQUE NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (user_id)
+);
