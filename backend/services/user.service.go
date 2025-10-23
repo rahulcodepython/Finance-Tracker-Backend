@@ -24,7 +24,7 @@ func Register(name, email, password string, db *sql.DB, cfg *config.Config) (*mo
 		Email:     email,
 		Password:  hashedPassword,
 		Provider:  models.AuthProviderEmail,
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().In(utils.LOC),
 	}
 
 	err = repository.CreateUser(user, db)
@@ -42,7 +42,7 @@ func Register(name, email, password string, db *sql.DB, cfg *config.Config) (*mo
 		UserID:    user.ID,
 		Token:     token,
 		ExpiresAt: expiresAt,
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().In(utils.LOC),
 	}
 
 	repository.CreateJwtToken(db, &jwtToken)
@@ -65,11 +65,11 @@ func Login(email, password string, db *sql.DB, cfg *config.Config) (*models.User
 		return nil, "", err
 	}
 
-	if jwtToken != nil && jwtToken.ExpiresAt.Before(time.Now()) {
+	if jwtToken != nil && jwtToken.ExpiresAt.After(time.Now().In(utils.LOC)) {
 		return user, jwtToken.Token, nil
 	}
 
-	if jwtToken.ExpiresAt.After(time.Now()) {
+	if jwtToken != nil && jwtToken.ExpiresAt.Before(time.Now().In(utils.LOC)) {
 		err := repository.DeleteJwtTokenByUserID(db, user.ID)
 		if err != nil {
 			return nil, "", err
@@ -86,7 +86,7 @@ func Login(email, password string, db *sql.DB, cfg *config.Config) (*models.User
 		UserID:    user.ID,
 		Token:     token,
 		ExpiresAt: expiresAt,
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().In(utils.LOC),
 	}
 
 	repository.CreateJwtToken(db, &newJwtToken)
@@ -127,7 +127,7 @@ func GoogleLogin(email, fullName string, db *sql.DB, cfg *config.Config) (*model
 			Name:      fullName,
 			Email:     email,
 			Provider:  models.AuthProviderGoogle,
-			CreatedAt: time.Now(),
+			CreatedAt: time.Now().In(utils.LOC),
 		}
 
 		if err := repository.CreateUser(user, db); err != nil {

@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -33,20 +32,9 @@ func Migrate(db *sql.DB) {
 		err := CommitExec(trimmedQuery, db)
 		if err != nil {
 			// If a statement fails, we log the error and the problematic query, then stop.
-			log.Printf("Failed to execute command:\n%s\n\nError: %v", trimmedQuery, err)
+			log.Printf("Failed to execute command Error: %v", err)
 		}
-
-		// Optional: Log successful execution of each statement
-		// To avoid printing long CREATE TABLE statements, we can just print a snippet.
-		getQuerySnippet := func(query string) string {
-			words := strings.Fields(query)
-			if len(words) > 5 {
-				return strings.Join(words[:5], " ")
-			}
-			return query
-		}
-		log.Printf("Successfully executed statement starting with: \"%s...\"", getQuerySnippet(trimmedQuery))
 	}
 
-	fmt.Println("\nDatabase schema setup complete.")
+	log.Println("Database schema setup complete.")
 }

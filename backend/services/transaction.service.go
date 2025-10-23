@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/repository"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
 func CreateTransaction(userID uuid.UUID, accountID uuid.UUID, categoryID uuid.NullUUID, description string, amount float64, transactionType models.TransactionType, transactionDate time.Time, note sql.NullString, db *sql.DB) (*models.Transaction, error) {
@@ -20,8 +21,8 @@ func CreateTransaction(userID uuid.UUID, accountID uuid.UUID, categoryID uuid.Nu
 		Type:            transactionType,
 		TransactionDate: transactionDate,
 		Note:            note,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		CreatedAt:       time.Now().In(utils.LOC),
+		UpdatedAt:       time.Now().In(utils.LOC),
 	}
 
 	// Start a transaction
@@ -101,7 +102,7 @@ func UpdateTransaction(id uuid.UUID, accountID uuid.UUID, categoryID uuid.NullUU
 	transaction.Type = transactionType
 	transaction.TransactionDate = transactionDate
 	transaction.Note = note
-	transaction.UpdatedAt = time.Now()
+	transaction.UpdatedAt = time.Now().In(utils.LOC)
 
 	if err := repository.UpdateTransaction(transaction, db); err != nil {
 		return nil, err
@@ -172,8 +173,6 @@ func DeleteTransaction(id uuid.UUID, db *sql.DB) error {
 func GetAggregateData(userID uuid.UUID, startDate string, endDate string, db *sql.DB) (map[string]interface{}, error) {
 	return repository.GetAggregateDataByUserID(userID, startDate, endDate, db)
 }
-
-
 
 func GetSpendingByCategory(userID uuid.UUID, db *sql.DB) ([]map[string]interface{}, error) {
 	return repository.GetSpendingByCategory(userID, db)

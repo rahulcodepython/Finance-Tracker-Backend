@@ -24,6 +24,5 @@ func CommitExec(query string, db *sql.DB) error {
 		return err
 	}
 
-	log.Println("Transaction committed successfully")
 	return nil
 }

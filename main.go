@@ -1,3 +1,5 @@
+package main
+
 import (
 	"fmt"
 	"log"
@@ -9,8 +11,8 @@ import (
 	"github.com/rahulcodepython/finance-tracker-backend/backend/config"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/pkg/scheduler"
-	"github.com/rahulcodepython/finance-tracker-backend/backend/repository"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/routes"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
 func main() {
@@ -18,10 +20,9 @@ func main() {
 
 	db := database.Connect(cfg)
 
-	database.Migrate(db)
+	utils.LoadTimezone()
 
-	userRepo := repository.NewUserRepository(db)
-	jwtRepo := repository.NewJwtTokenRepository(db)
+	database.Migrate(db)
 
 	scheduler.StartScheduler(db)
 
@@ -42,7 +43,7 @@ func main() {
 
 	// router.Router() is called to set up all the application routes and middleware.
 	// It takes the Fiber server, configuration, and database connection as arguments.
-	routes.Setup(server, cfg, userRepo, jwtRepo)
+	routes.Setup(server)
 
 	// address is a string that represents the server address.
 	// It is constructed by combining the server host and port from the configuration.

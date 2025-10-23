@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/repository"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
 func StartScheduler(db *sql.DB) {
@@ -38,11 +39,11 @@ func ProcessRecurringTransactions(db *sql.DB) {
 			continue
 		}
 
-		today := time.Now().Day()
+		today := time.Now().In(utils.LOC).Day()
 
 		if rt.RecurringFrequency == models.Monthly && rt.RecurringDate == today {
 			createTransactionFromRecurring(rt, db)
-		} else if rt.RecurringFrequency == models.Yearly && rt.RecurringDate == today && time.Now().Month() == rt.CreatedAt.Month() {
+		} else if rt.RecurringFrequency == models.Yearly && rt.RecurringDate == today && time.Now().In(utils.LOC).Month() == rt.CreatedAt.Month() {
 			createTransactionFromRecurring(rt, db)
 		}
 	}
@@ -57,9 +58,9 @@ func createTransactionFromRecurring(rt models.RecurringTransaction, db *sql.DB) 
 		Description:     rt.Description,
 		Amount:          rt.Amount,
 		Type:            rt.Type,
-		TransactionDate: time.Now(),
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		TransactionDate: time.Now().In(utils.LOC),
+		CreatedAt:       time.Now().In(utils.LOC),
+		UpdatedAt:       time.Now().In(utils.LOC),
 	}
 
 	if err := repository.CreateTransaction(t, db); err != nil {

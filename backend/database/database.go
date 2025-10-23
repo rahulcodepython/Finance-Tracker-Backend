@@ -13,7 +13,7 @@ import (
 var DB *sql.DB
 
 func Connect(cfg *config.Config) *sql.DB {
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=Asia/Shanghai",
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=Asia/Kolkata",
 		cfg.Database.DBHost,
 		cfg.Database.DBUser,
 		cfg.Database.DBPassword,

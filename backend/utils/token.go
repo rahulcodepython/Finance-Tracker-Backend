@@ -17,7 +17,7 @@ func GenerateToken(userID string, cfg *config.Config) (string, time.Time, error)
 		return "", time.Time{}, err
 	}
 
-	expiresAt := time.Now().Add(expirationTime)
+	expiresAt := time.Now().In(LOC).Add(expirationTime)
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"exp":     expiresAt.Unix(),

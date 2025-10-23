@@ -49,7 +49,7 @@ func DeserializeUser(c *fiber.Ctx) error {
 
 		if jwtToken == nil {
 			return utils.UnauthorizedAccess(c, err, "Invalid token")
-		} else if jwtToken.ExpiresAt.Before(time.Now()) {
+		} else if jwtToken.ExpiresAt.Before(time.Now().In(utils.LOC)) {
 			err := repository.DeleteJwtToken(db, tokenString)
 			if err != nil {
 				return utils.UnauthorizedAccess(c, err, "Invalid token")

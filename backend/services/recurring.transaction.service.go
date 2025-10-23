@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/repository"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
 func CreateRecurringTransaction(userID uuid.UUID, accountID uuid.UUID, categoryID uuid.UUID, description string, amount float64, transactionType models.TransactionType, recurringFrequency models.RecurringFrequency, recurringDate int, db *sql.DB) (*models.RecurringTransaction, error) {
@@ -20,8 +21,8 @@ func CreateRecurringTransaction(userID uuid.UUID, accountID uuid.UUID, categoryI
 		Type:               transactionType,
 		RecurringFrequency: recurringFrequency,
 		RecurringDate:      recurringDate,
-		CreatedAt:          time.Now(),
-		UpdatedAt:          time.Now(),
+		CreatedAt:          time.Now().In(utils.LOC),
+		UpdatedAt:          time.Now().In(utils.LOC),
 	}
 
 	if err := repository.CreateRecurringTransaction(recurringTransaction, db); err != nil {
@@ -48,7 +49,7 @@ func UpdateRecurringTransaction(id uuid.UUID, accountID uuid.UUID, categoryID uu
 	recurringTransaction.Type = transactionType
 	recurringTransaction.RecurringFrequency = recurringFrequency
 	recurringTransaction.RecurringDate = recurringDate
-	recurringTransaction.UpdatedAt = time.Now()
+	recurringTransaction.UpdatedAt = time.Now().In(utils.LOC)
 
 	if err := repository.UpdateRecurringTransaction(recurringTransaction, db); err != nil {
 		return nil, err
