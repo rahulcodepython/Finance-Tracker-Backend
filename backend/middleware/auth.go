@@ -13,17 +13,19 @@ import (
 )
 
 func DeserializeUser(c *fiber.Ctx) error {
-	cfg := c.Locals("cfg").(*config.Config)
-
 	var tokenString string
+
+	cfg := c.Locals("cfg").(*config.Config)
 	authorization := c.Get("Authorization")
 
-	if strings.HasPrefix(authorization, "Bearer ") {
-		tokenString = strings.TrimPrefix(authorization, "Bearer ")
+	if !strings.HasPrefix(authorization, "Bearer ") {
+		return utils.UnauthorizedAccess(c, nil, "Unauthorized Access")
 	}
 
+	tokenString = strings.TrimPrefix(authorization, "Bearer ")
+
 	if tokenString == "" {
-		return utils.UnauthorizedAccess(c, nil, "You are not logged in")
+		return utils.UnauthorizedAccess(c, nil, "Unauthorized Access")
 	}
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
