@@ -310,6 +310,7 @@ graph TD
 |user_id|UUID|Foreign Key → `users(id)`, On Delete CASCADE|
 |account_id|UUID|Foreign Key → `accounts(id)`, On Delete CASCADE|
 |category_id|UUID|Foreign Key → `categories(id)`, On Delete RESTRICT, Nullable|
+|budget_id|UUID|Foreign Key → `budgets(id)`, On Delete SET NULL, Nullable|
 |description|VARCHAR(255)|Not Null|
 |amount|NUMERIC(19,4)|Not Null|
 |type|transaction_type|Not Null|
@@ -344,9 +345,8 @@ graph TD
 |---|---|---|
 |id|UUID|Primary Key, Default: `gen_random_uuid()`|
 |user_id|UUID|Foreign Key → `users(id)`, On Delete CASCADE|
-|category_id|UUID|Foreign Key → `categories(id)`, On Delete CASCADE|
+|name|VARCHAR(100)|Not Null|
 |amount|NUMERIC(19,4)|Not Null|
-|month|TIMESTAMPTZ|Not Null|
 |created_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
 |updated_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
 
@@ -737,7 +737,7 @@ All API responses will adhere to the following structure:
         }
         ```
 
-- **Endpoint: `GET /api/v1/accounts`**
+- **Endpoint: `GET /api/v1/accounts/`**
 
     - **Description:** Retrieves all financial accounts for the authenticated user.
     - **Authorization:** Authenticated User
@@ -769,6 +769,7 @@ All API responses will adhere to the following structure:
         ```json
         {
           "name": "My Updated Savings Account",
+          "type": "savings",
           "is_active": false
         }
         ```
@@ -833,6 +834,7 @@ All API responses will adhere to the following structure:
         {
           "account_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
           "category_id": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+          "budget_id": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6", // Optional
           "description": "Groceries",
           "amount": 75.50,
           "type": "expense",
@@ -848,6 +850,7 @@ All API responses will adhere to the following structure:
             "id": "c1d2e3f4-g5h6-i7j8-k9l0-m1n2o3p4q5r6",
             "account_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
             "category_id": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+            "budget_id": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
             "description": "Groceries",
             "amount": 75.50,
             "type": "expense",
@@ -863,27 +866,15 @@ All API responses will adhere to the following structure:
 
     - **Description:** Retrieves all transactions for the authenticated user.
     - **Authorization:** Authenticated User
-    - **Success Response (200 OK):**
-        ```json
-        {
-          "success": true,
-          "message": "Transactions retrieved successfully",
-          "data": [
-            {
-              "id": "c1d2e3f4-g5h6-i7j8-k9l0-m1n2o3p4q5r6",
-              "account_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
-              "category_id": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
-              "description": "Groceries",
-              "amount": 75.50,
-              "type": "expense",
-              "transaction_date": "2025-10-09",
-              "created_at": "2025-10-09T10:00:00Z",
-              "updated_at": "2025-10-09T10:00:00Z"
-            }
-          ],
-          "error": null
-        }
-        ```
+    - **Produce:**  json
+    - **Param** page query int false "Page number"
+    - **Param** limit query int false "Number of items per page"
+    - **Param** description query string false "Filter by description"
+    - **Param** category query string false "Filter by category ID"
+    - **Param** account query string false "Filter by account ID"
+    - **Param** startDate query string false "Filter by start date (YYYY-MM-DD)"
+    - **Param** endDate query string false "Filter by end date (YYYY-MM-DD)"
+    - **Param** budget query string false "Filter by budget ID"
 
 - **Endpoint: `PATCH /api/v1/transactions/update/:id`**
 
@@ -892,8 +883,13 @@ All API responses will adhere to the following structure:
     - **Request Body:**
         ```json
         {
+          "account_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+          "category_id": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+          "budget_id": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6", // Optional
           "description": "Weekly Groceries",
-          "amount": 80.00
+          "amount": 80.00,
+          "type": "expense",
+          "transaction_date": "2025-10-09"
         }
         ```
     - **Success Response (200 OK):**
@@ -905,6 +901,7 @@ All API responses will adhere to the following structure:
             "id": "c1d2e3f4-g5h6-i7j8-k9l0-m1n2o3p4q5r6",
             "account_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
             "category_id": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+            "budget_id": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
             "description": "Weekly Groceries",
             "amount": 80.00,
             "type": "expense",
@@ -1120,10 +1117,8 @@ All API responses will adhere to the following structure:
     - **Request Body:**
         ```json
         {
-          "category_id": "e1f2g3h4-i5j6-k7l8-m9n0-o1p2q3r4s5t6",
-          "amount": 500.00,
-          "month": 10,
-          "year": 2025
+          "name": "Monthly Groceries",
+          "amount": 500.00
         }
         ```
     - **Success Response (201 Created):**
@@ -1133,10 +1128,8 @@ All API responses will adhere to the following structure:
           "message": "Budget created successfully",
           "data": {
             "id": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
-            "category_id": "e1f2g3h4-i5j6-k7l8-m9n0-o1p2q3r4s5t6",
+            "name": "Monthly Groceries",
             "amount": 500.00,
-            "month": 10,
-            "year": 2025,
             "created_at": "2025-10-09T10:00:00Z",
             "updated_at": "2025-10-09T10:00:00Z"
           },
@@ -1156,10 +1149,8 @@ All API responses will adhere to the following structure:
           "data": [
             {
               "id": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
-              "category_id": "e1f2g3h4-i5j6-k7l8-m9n0-o1p2q3r4s5t6",
+              "name": "Monthly Groceries",
               "amount": 500.00,
-              "month": 10,
-              "year": 2025,
               "created_at": "2025-10-09T10:00:00Z",
               "updated_at": "2025-10-09T10:00:00Z"
             }
@@ -1175,6 +1166,7 @@ All API responses will adhere to the following structure:
     - **Request Body:**
         ```json
         {
+          "name": "Updated Monthly Groceries",
           "amount": 550.00
         }
         ```
@@ -1185,10 +1177,8 @@ All API responses will adhere to the following structure:
           "message": "Budget updated successfully",
           "data": {
             "id": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
-            "category_id": "e1f2g3h4-i5j6-k7l8-m9n0-o1p2q3r4s5t6",
+            "name": "Updated Monthly Groceries",
             "amount": 550.00,
-            "month": 10,
-            "year": 2025,
             "created_at": "2025-10-09T10:00:00Z",
             "updated_at": "2025-10-09T10:15:00Z"
           },

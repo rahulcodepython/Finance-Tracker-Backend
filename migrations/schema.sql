@@ -35,6 +35,7 @@ CREATE TABLE transactions (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
     category_id UUID REFERENCES categories(id) ON DELETE RESTRICT,
+    budget_id UUID REFERENCES budgets(id) ON DELETE SET NULL,
     description VARCHAR(255) NOT NULL,
     amount NUMERIC(19, 4) NOT NULL,
     type transaction_type NOT NULL,
@@ -61,9 +62,8 @@ CREATE TABLE recurring_transactions (
 CREATE TABLE budgets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    category_id UUID NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
     amount NUMERIC(19, 4) NOT NULL,
-    month TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

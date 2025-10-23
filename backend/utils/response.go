@@ -79,6 +79,14 @@ func UnauthorizedAccess(c *fiber.Ctx, err error, message string) error {
 		message = "Unauthorized Access"
 	}
 
+	var errMessage string
+
+	if err != nil {
+		errMessage = err.Error()
+	} else {
+		errMessage = ""
+	}
+
 	// c.Status() sets the HTTP status code of the response.
 	// c.JSON() sends a JSON response.
 	return c.Status(fiber.StatusUnauthorized).JSON(response{
@@ -87,7 +95,7 @@ func UnauthorizedAccess(c *fiber.Ctx, err error, message string) error {
 		// The message is included in the response.
 		Message: message,
 		// The error message is included in the response.
-		Error: err.Error(),
+		Error: errMessage,
 	})
 }
 

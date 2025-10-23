@@ -10,12 +10,13 @@ import (
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
-func CreateTransaction(userID uuid.UUID, accountID uuid.UUID, categoryID uuid.NullUUID, description string, amount float64, transactionType models.TransactionType, transactionDate time.Time, note sql.NullString, db *sql.DB) (*models.Transaction, error) {
+func CreateTransaction(userID uuid.UUID, accountID uuid.UUID, categoryID uuid.NullUUID, budgetID uuid.NullUUID, description string, amount float64, transactionType models.TransactionType, transactionDate time.Time, note sql.NullString, db *sql.DB) (*models.Transaction, error) {
 	transaction := &models.Transaction{
 		ID:              uuid.New(),
 		UserID:          userID,
 		AccountID:       accountID,
 		CategoryID:      categoryID,
+		BudgetID:        budgetID,
 		Description:     description,
 		Amount:          amount,
 		Type:            transactionType,
@@ -24,13 +25,6 @@ func CreateTransaction(userID uuid.UUID, accountID uuid.UUID, categoryID uuid.Nu
 		CreatedAt:       time.Now().In(utils.LOC),
 		UpdatedAt:       time.Now().In(utils.LOC),
 	}
-
-	// Start a transaction
-	tx, err := db.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback() // Rollback on error, commit on success
 
 	// Create the transaction
 	if err := repository.CreateTransaction(transaction, db); err != nil {
@@ -51,19 +45,26 @@ func CreateTransaction(userID uuid.UUID, accountID uuid.UUID, categoryID uuid.Nu
 		return nil, err
 	}
 
-	// Commit the transaction
-	if err := tx.Commit(); err != nil {
-		return nil, err
+	// Update budget if provided
+	if budgetID.Valid {
+		budget, err := repository.GetBudgetByID(budgetID.UUID, db)
+		if err != nil {
+			return nil, err
+		}
+		budget.Amount -= amount // Deduct transaction amount from budget
+		if err := repository.UpdateBudget(budget, db); err != nil {
+			return nil, err
+		}
 	}
 
 	return transaction, nil
 }
 
-func GetTransactions(userID uuid.UUID, page int, limit int, description string, categoryID string, accountID string, startDate string, endDate string, db *sql.DB) ([]models.Transaction, error) {
-	return repository.GetTransactionsByUserIDWithFilters(userID, page, limit, description, categoryID, accountID, startDate, endDate, db)
+func GetTransactions(userID uuid.UUID, page int, limit int, description string, categoryID string, accountID string, budgetID string, startDate string, endDate string, db *sql.DB) ([]models.Transaction, error) {
+	return repository.GetTransactionsByUserIDWithFilters(userID, page, limit, description, categoryID, accountID, budgetID, startDate, endDate, db)
 }
 
-func UpdateTransaction(id uuid.UUID, accountID uuid.UUID, categoryID uuid.NullUUID, description string, amount float64, transactionType models.TransactionType, transactionDate time.Time, note sql.NullString, db *sql.DB) (*models.Transaction, error) {
+func UpdateTransaction(id uuid.UUID, accountID uuid.UUID, categoryID uuid.NullUUID, budgetID uuid.NullUUID, description string, amount float64, transactionType models.TransactionType, transactionDate time.Time, note sql.NullString, db *sql.DB) (*models.Transaction, error) {
 	transaction, err := repository.GetTransactionByID(id, db)
 	if err != nil {
 		return nil, err
@@ -71,14 +72,8 @@ func UpdateTransaction(id uuid.UUID, accountID uuid.UUID, categoryID uuid.NullUU
 
 	oldAccountID := transaction.AccountID
 	oldAmount := transaction.Amount
-	oldType := transaction.Type // Store old type for balance reversal
-
-	// Start a transaction
-	tx, err := db.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback() // Rollback on error, commit on success
+	oldType := transaction.Type
+	oldBudgetID := transaction.BudgetID
 
 	// Revert old transaction amount from old account balance
 	oldAccount, err := repository.GetAccountByID(oldAccountID, db)
@@ -94,9 +89,22 @@ func UpdateTransaction(id uuid.UUID, accountID uuid.UUID, categoryID uuid.NullUU
 		return nil, err
 	}
 
+	// Revert old transaction amount from old budget if it existed
+	if oldBudgetID.Valid {
+		oldBudget, err := repository.GetBudgetByID(oldBudgetID.UUID, db)
+		if err != nil {
+			return nil, err
+		}
+		oldBudget.Amount += oldAmount // Add back the old amount
+		if err := repository.UpdateBudget(oldBudget, db); err != nil {
+			return nil, err
+		}
+	}
+
 	// Update transaction details
 	transaction.AccountID = accountID
 	transaction.CategoryID = categoryID
+	transaction.BudgetID = budgetID
 	transaction.Description = description
 	transaction.Amount = amount
 	transaction.Type = transactionType
@@ -122,9 +130,16 @@ func UpdateTransaction(id uuid.UUID, accountID uuid.UUID, categoryID uuid.NullUU
 		return nil, err
 	}
 
-	// Commit the transaction
-	if err := tx.Commit(); err != nil {
-		return nil, err
+	// Update new budget if provided
+	if budgetID.Valid {
+		newBudget, err := repository.GetBudgetByID(budgetID.UUID, db)
+		if err != nil {
+			return nil, err
+		}
+		newBudget.Amount -= amount // Deduct new transaction amount from new budget
+		if err := repository.UpdateBudget(newBudget, db); err != nil {
+			return nil, err
+		}
 	}
 
 	return transaction, nil
@@ -135,13 +150,6 @@ func DeleteTransaction(id uuid.UUID, db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-
-	// Start a transaction
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback() // Rollback on error, commit on success
 
 	account, err := repository.GetAccountByID(transaction.AccountID, db)
 	if err != nil {
@@ -158,12 +166,19 @@ func DeleteTransaction(id uuid.UUID, db *sql.DB) error {
 		return err
 	}
 
-	if err := repository.DeleteTransaction(id, db); err != nil {
-		return err
+	// Revert budget if it existed
+	if transaction.BudgetID.Valid {
+		budget, err := repository.GetBudgetByID(transaction.BudgetID.UUID, db)
+		if err != nil {
+			return err
+		}
+		budget.Amount += transaction.Amount // Add back the transaction amount
+		if err := repository.UpdateBudget(budget, db); err != nil {
+			return err
+		}
 	}
 
-	// Commit the transaction
-	if err := tx.Commit(); err != nil {
+	if err := repository.DeleteTransaction(id, db); err != nil {
 		return err
 	}
 

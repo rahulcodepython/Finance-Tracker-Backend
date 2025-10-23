@@ -26,6 +26,7 @@ func CreateTransaction(c *fiber.Ctx) error {
 	type CreateTransactionInput struct {
 		AccountID   string  `json:"accountId"`
 		CategoryID  string  `json:"categoryId"`
+		BudgetID    string  `json:"budgetId"`
 		Description string  `json:"description"`
 		Amount      float64 `json:"amount"`
 		Type        string  `json:"type"`
@@ -58,6 +59,15 @@ func CreateTransaction(c *fiber.Ctx) error {
 		categoryID = uuid.NullUUID{UUID: parsedCategoryID, Valid: true}
 	}
 
+	var budgetID uuid.NullUUID
+	if input.BudgetID != "" {
+		parsedBudgetID, err := uuid.Parse(input.BudgetID)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid budget ID", "error": err.Error()})
+		}
+		budgetID = uuid.NullUUID{UUID: parsedBudgetID, Valid: true}
+	}
+
 	transactionDate, err := time.Parse("2006-01-02", input.Date)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid date format", "error": err.Error()})
@@ -65,7 +75,7 @@ func CreateTransaction(c *fiber.Ctx) error {
 
 	db := database.DB
 
-	transaction, err := services.CreateTransaction(userID, accountID, categoryID, input.Description, input.Amount, models.TransactionType(input.Type), transactionDate, sql.NullString{String: input.Note, Valid: input.Note != ""}, db)
+	transaction, err := services.CreateTransaction(userID, accountID, categoryID, budgetID, input.Description, input.Amount, models.TransactionType(input.Type), transactionDate, sql.NullString{String: input.Note, Valid: input.Note != ""}, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to create transaction", "error": err.Error()})
 	}
@@ -86,6 +96,7 @@ func CreateTransaction(c *fiber.Ctx) error {
 // @Param account query string false "Filter by account ID"
 // @Param startDate query string false "Filter by start date (YYYY-MM-DD)"
 // @Param endDate query string false "Filter by end date (YYYY-MM-DD)"
+// @Param budget query string false "Filter by budget ID"
 // @Success 200 {object} map[string]interface{} "Transactions retrieved successfully"
 // @Router /transactions [get]
 func GetTransactions(c *fiber.Ctx) error {
@@ -98,12 +109,13 @@ func GetTransactions(c *fiber.Ctx) error {
 	description := c.Query("description")
 	categoryID := c.Query("category")
 	accountID := c.Query("account")
+	budgetID := c.Query("budget")
 	startDate := c.Query("startDate")
 	endDate := c.Query("endDate")
 
 	db := database.DB
 
-	transactions, err := services.GetTransactions(userID, page, limit, description, categoryID, accountID, startDate, endDate, db)
+	transactions, err := services.GetTransactions(userID, page, limit, description, categoryID, accountID, budgetID, startDate, endDate, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to get transactions", "error": err.Error()})
 	}
@@ -126,6 +138,7 @@ func UpdateTransaction(c *fiber.Ctx) error {
 	type UpdateTransactionInput struct {
 		AccountID   string  `json:"accountId"`
 		CategoryID  string  `json:"categoryId"`
+		BudgetID    string  `json:"budgetId"`
 		Description string  `json:"description"`
 		Amount      float64 `json:"amount"`
 		Type        string  `json:"type"`
@@ -158,6 +171,15 @@ func UpdateTransaction(c *fiber.Ctx) error {
 		categoryID = uuid.NullUUID{UUID: parsedCategoryID, Valid: true}
 	}
 
+	var budgetID uuid.NullUUID
+	if input.BudgetID != "" {
+		parsedBudgetID, err := uuid.Parse(input.BudgetID)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid budget ID", "error": err.Error()})
+		}
+		budgetID = uuid.NullUUID{UUID: parsedBudgetID, Valid: true}
+	}
+
 	transactionDate, err := time.Parse("2006-01-02", input.Date)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid date format", "error": err.Error()})
@@ -165,7 +187,7 @@ func UpdateTransaction(c *fiber.Ctx) error {
 
 	db := database.DB
 
-	transaction, err := services.UpdateTransaction(transactionID, accountID, categoryID, input.Description, input.Amount, models.TransactionType(input.Type), transactionDate, sql.NullString{String: input.Note, Valid: input.Note != ""}, db)
+	transaction, err := services.UpdateTransaction(transactionID, accountID, categoryID, budgetID, input.Description, input.Amount, models.TransactionType(input.Type), transactionDate, sql.NullString{String: input.Note, Valid: input.Note != ""}, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to update transaction", "error": err.Error()})
 	}

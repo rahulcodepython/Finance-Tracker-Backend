@@ -8,13 +8,12 @@ import (
 
 // Budget corresponds to the `budgets` table.
 type Budget struct {
-	ID         uuid.UUID `json:"id"`
-	UserID     uuid.UUID `json:"userId"`
-	CategoryID uuid.UUID `json:"categoryId"`
-	Amount     float64   `json:"amount"`
-	Month      time.Time `json:"month"`
-	CreatedAt  time.Time `json:"createdAt"`
-	UpdatedAt  time.Time `json:"updatedAt"`
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"userId"`
+	Name      string    `json:"name"`
+	Amount    float64   `json:"amount"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-var BudgetColumns = "id, user_id, category_id, amount, month, created_at, updated_at"
+var BudgetColumns = "id, user_id, name, amount, created_at, updated_at"

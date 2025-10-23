@@ -22,7 +22,7 @@ func GetDashboardSummary(userID uuid.UUID, db *sql.DB) (map[string]interface{}, 
 	}
 
 	// Get recent transactions
-	recentTransactions, err := GetTransactions(userID, 1, 10, "", "", "", "", "", db)
+	recentTransactions, err := GetTransactions(userID, 1, 10, "", "", "", "", "", "", db)
 	if err != nil {
 		return nil, err
 	}

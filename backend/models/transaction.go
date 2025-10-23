@@ -20,6 +20,7 @@ type Transaction struct {
 	UserID                 uuid.UUID       `json:"userId"`
 	AccountID              uuid.UUID       `json:"accountId"`
 	CategoryID             uuid.NullUUID   `json:"categoryId"`
+	BudgetID               uuid.NullUUID   `json:"budgetId,omitempty"`
 	Description            string          `json:"description"`
 	Amount                 float64         `json:"amount"` // See note on NUMERIC type above
 	Type                   TransactionType `json:"type"`
@@ -29,4 +30,4 @@ type Transaction struct {
 	UpdatedAt              time.Time       `json:"updatedAt"`
 }
 
-var TransactionColumns = "id, user_id, account_id, category_id, description, amount, type, transaction_date, note, created_at, updated_at"
+var TransactionColumns = "id, user_id, account_id, category_id, budget_id, description, amount, type, transaction_date, note, created_at, updated_at"

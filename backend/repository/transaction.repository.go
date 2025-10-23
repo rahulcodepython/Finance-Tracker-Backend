@@ -10,8 +10,8 @@ import (
 )
 
 func CreateTransaction(transaction *models.Transaction, db *sql.DB) error {
-	query := fmt.Sprintf("INSERT INTO transactions (%s) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)", models.TransactionColumns)
-	_, err := db.Exec(query, transaction.ID, transaction.UserID, transaction.AccountID, transaction.CategoryID, transaction.Description, transaction.Amount, transaction.Type, transaction.TransactionDate, transaction.Note, transaction.CreatedAt, transaction.UpdatedAt)
+	query := fmt.Sprintf("INSERT INTO transactions (%s) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)", models.TransactionColumns)
+	_, err := db.Exec(query, transaction.ID, transaction.UserID, transaction.AccountID, transaction.CategoryID, transaction.BudgetID, transaction.Description, transaction.Amount, transaction.Type, transaction.TransactionDate, transaction.Note, transaction.CreatedAt, transaction.UpdatedAt)
 	return err
 }
 
@@ -26,7 +26,7 @@ func GetTransactionsByUserID(userID uuid.UUID, db *sql.DB) ([]models.Transaction
 	var transactions []models.Transaction
 	for rows.Next() {
 		var transaction models.Transaction
-		if err := rows.Scan(&transaction.ID, &transaction.UserID, &transaction.AccountID, &transaction.CategoryID, &transaction.Description, &transaction.Amount, &transaction.Type, &transaction.TransactionDate, &transaction.Note, &transaction.CreatedAt, &transaction.UpdatedAt); err != nil {
+		if err := rows.Scan(&transaction.ID, &transaction.UserID, &transaction.AccountID, &transaction.CategoryID, &transaction.BudgetID, &transaction.Description, &transaction.Amount, &transaction.Type, &transaction.TransactionDate, &transaction.Note, &transaction.CreatedAt, &transaction.UpdatedAt); err != nil {
 			return nil, err
 		}
 		transactions = append(transactions, transaction)
@@ -39,8 +39,7 @@ func GetTransactionByID(id uuid.UUID, db *sql.DB) (*models.Transaction, error) {
 	row := db.QueryRow(query, id)
 
 	var transaction models.Transaction
-	if err := row.Scan(&transaction.ID, &transaction.UserID, &transaction.AccountID, &transaction.CategoryID, &transaction.Description, &transaction.Amount, &transaction.Type, &transaction.TransactionDate, &transaction.Note, &transaction.CreatedAt, &transaction.UpdatedAt); err != nil {
-		if err == sql.ErrNoRows {
+			if err := row.Scan(&transaction.ID, &transaction.UserID, &transaction.AccountID, &transaction.CategoryID, &transaction.BudgetID, &transaction.Description, &transaction.Amount, &transaction.Type, &transaction.TransactionDate, &transaction.Note, &transaction.CreatedAt, &transaction.UpdatedAt); err != nil {		if err == sql.ErrNoRows {
 			return nil, nil // Or a custom not found error
 		}
 		return nil, err
@@ -49,8 +48,8 @@ func GetTransactionByID(id uuid.UUID, db *sql.DB) (*models.Transaction, error) {
 }
 
 func UpdateTransaction(transaction *models.Transaction, db *sql.DB) error {
-	query := "UPDATE transactions SET account_id = $1, category_id = $2, description = $3, amount = $4, type = $5, transaction_date = $6, note = $7, updated_at = $8 WHERE id = $9"
-	_, err := db.Exec(query, transaction.AccountID, transaction.CategoryID, transaction.Description, transaction.Amount, transaction.Type, transaction.TransactionDate, transaction.Note, transaction.UpdatedAt, transaction.ID)
+	query := "UPDATE transactions SET account_id = $1, category_id = $2, budget_id = $3, description = $4, amount = $5, type = $6, transaction_date = $7, note = $8, updated_at = $9 WHERE id = $10"
+	_, err := db.Exec(query, transaction.AccountID, transaction.CategoryID, transaction.BudgetID, transaction.Description, transaction.Amount, transaction.Type, transaction.TransactionDate, transaction.Note, transaction.UpdatedAt, transaction.ID)
 	return err
 }
 
@@ -60,9 +59,9 @@ func DeleteTransaction(id uuid.UUID, db *sql.DB) error {
 	return err
 }
 
-func GetTransactionsByUserIDWithFilters(userID uuid.UUID, page int, limit int, description string, categoryID string, accountID string, startDate string, endDate string, db *sql.DB) ([]models.Transaction, error) {
+func GetTransactionsByUserIDWithFilters(userID uuid.UUID, page int, limit int, description string, categoryID string, accountID string, budgetID string, startDate string, endDate string, db *sql.DB) ([]models.Transaction, error) {
 	var query strings.Builder
-	query.WriteString("SELECT * FROM transactions WHERE user_id = $1")
+	query.WriteString("SELECT id, user_id, account_id, category_id, budget_id, description, amount, type, transaction_date, note, created_at, updated_at FROM transactions WHERE user_id = $1")
 
 	args := []interface{}{userID}
 	argCount := 2
@@ -82,6 +81,12 @@ func GetTransactionsByUserIDWithFilters(userID uuid.UUID, page int, limit int, d
 	if accountID != "" {
 		query.WriteString(fmt.Sprintf(" AND account_id = $%d", argCount))
 		args = append(args, accountID)
+		argCount++
+	}
+
+	if budgetID != "" {
+		query.WriteString(fmt.Sprintf(" AND budget_id = $%d", argCount))
+		args = append(args, budgetID)
 		argCount++
 	}
 
@@ -108,7 +113,7 @@ func GetTransactionsByUserIDWithFilters(userID uuid.UUID, page int, limit int, d
 	var transactions []models.Transaction
 	for rows.Next() {
 		var transaction models.Transaction
-		if err := rows.Scan(&transaction.ID, &transaction.UserID, &transaction.AccountID, &transaction.CategoryID, &transaction.Description, &transaction.Amount, &transaction.Type, &transaction.TransactionDate, &transaction.Note, &transaction.CreatedAt, &transaction.UpdatedAt); err != nil {
+		if err := rows.Scan(&transaction.ID, &transaction.UserID, &transaction.AccountID, &transaction.CategoryID, &transaction.BudgetID, &transaction.Description, &transaction.Amount, &transaction.Type, &transaction.TransactionDate, &transaction.Note, &transaction.CreatedAt, &transaction.UpdatedAt); err != nil {
 			return nil, err
 		}
 		transactions = append(transactions, transaction)

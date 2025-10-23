@@ -149,7 +149,7 @@ func GetProfile(c *fiber.Ctx) error {
 		return utils.NotFound(c, err, "User not found")
 	}
 
-	return utils.OKResponse(c, "Profile retrieved successfully", fiber.Map{"personal": fiber.Map{"fullName": user.Name, "email": user.Email}})
+	return utils.OKResponse(c, "Profile retrieved successfully", fiber.Map{"personal": fiber.Map{"name": user.Name, "email": user.Email}})
 }
 
 // ChangePassword godoc

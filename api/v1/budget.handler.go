@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"time"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
@@ -21,9 +19,8 @@ import (
 // @Router /budgets/create [post]
 func CreateBudget(c *fiber.Ctx) error {
 	type CreateBudgetInput struct {
-		CategoryID string  `json:"categoryId"`
-		Amount     float64 `json:"amount"`
-		Month      string  `json:"month"`
+		Name   string  `json:"name"`
+		Amount float64 `json:"amount"`
 	}
 
 	var input CreateBudgetInput
@@ -37,19 +34,9 @@ func CreateBudget(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
 	}
 
-	categoryID, err := uuid.Parse(input.CategoryID)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
-	}
-
-	month, err := time.Parse("2006-01", input.Month)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid month format", "error": err.Error()})
-	}
-
 	db := database.DB
 
-	budget, err := services.CreateBudget(userID, categoryID, input.Amount, month, db)
+	budget, err := services.CreateBudget(userID, input.Name, input.Amount, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to create budget", "error": err.Error()})
 	}
@@ -94,9 +81,8 @@ func GetBudgets(c *fiber.Ctx) error {
 // @Router /budgets/update/{id} [patch]
 func UpdateBudget(c *fiber.Ctx) error {
 	type UpdateBudgetInput struct {
-		CategoryID string  `json:"categoryId"`
-		Amount     float64 `json:"amount"`
-		Month      string  `json:"month"`
+		Name   string  `json:"name"`
+		Amount float64 `json:"amount"`
 	}
 
 	var input UpdateBudgetInput
@@ -110,19 +96,9 @@ func UpdateBudget(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid budget ID", "error": err.Error()})
 	}
 
-	categoryID, err := uuid.Parse(input.CategoryID)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
-	}
-
-	month, err := time.Parse("2006-01", input.Month)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid month format", "error": err.Error()})
-	}
-
 	db := database.DB
 
-	budget, err := services.UpdateBudget(budgetID, categoryID, input.Amount, month, db)
+	budget, err := services.UpdateBudget(budgetID, input.Name, input.Amount, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to update budget", "error": err.Error()})
 	}

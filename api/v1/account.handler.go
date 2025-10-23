@@ -20,8 +20,9 @@ import (
 // @Router /accounts/create [post]
 func CreateAccount(c *fiber.Ctx) error {
 	type CreateAccountInput struct {
-		Name string `json:"name"`
-		Type string `json:"type"`
+		Name    string  `json:"name"`
+		Type    string  `json:"type"`
+		Balance float64 `json:"balance"`
 	}
 
 	var input CreateAccountInput
@@ -37,7 +38,7 @@ func CreateAccount(c *fiber.Ctx) error {
 
 	db := database.DB
 
-	account, err := services.CreateAccount(userID, input.Name, models.AccountType(input.Type), db)
+	account, err := services.CreateAccount(userID, input.Name, models.AccountType(input.Type), input.Balance, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to create account", "error": err.Error()})
 	}
@@ -82,8 +83,9 @@ func GetAccounts(c *fiber.Ctx) error {
 // @Router /accounts/update/{id} [patch]
 func UpdateAccount(c *fiber.Ctx) error {
 	type UpdateAccountInput struct {
-		Name string `json:"name"`
-		Type string `json:"type"`
+		Name     string `json:"name"`
+		Type     string `json:"type"`
+		IsActive bool   `json:"isActive"`
 	}
 
 	var input UpdateAccountInput
@@ -99,7 +101,7 @@ func UpdateAccount(c *fiber.Ctx) error {
 
 	db := database.DB
 
-	account, err := services.UpdateAccount(accountID, input.Name, models.AccountType(input.Type), db)
+	account, err := services.UpdateAccount(accountID, input.Name, models.AccountType(input.Type), input.IsActive, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to update account", "error": err.Error()})
 	}

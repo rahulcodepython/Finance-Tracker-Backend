@@ -8,12 +8,14 @@ import (
 	"github.com/rahulcodepython/finance-tracker-backend/backend/repository"
 )
 
-func CreateAccount(userID uuid.UUID, name string, accountType models.AccountType, db *sql.DB) (*models.Account, error) {
+func CreateAccount(userID uuid.UUID, name string, accountType models.AccountType, balance float64, db *sql.DB) (*models.Account, error) {
 	account := &models.Account{
-		ID:     uuid.New(),
-		UserID: userID,
-		Name:   name,
-		Type:   accountType,
+		ID:       uuid.New(),
+		UserID:   userID,
+		Name:     name,
+		Type:     accountType,
+		Balance:  balance,
+		IsActive: true,
 	}
 
 	err := repository.CreateAccount(account, db)
@@ -28,7 +30,7 @@ func GetAccounts(userID uuid.UUID, db *sql.DB) ([]models.Account, error) {
 	return repository.GetAccountsByUserID(userID, db)
 }
 
-func UpdateAccount(id uuid.UUID, name string, accountType models.AccountType, db *sql.DB) (*models.Account, error) {
+func UpdateAccount(id uuid.UUID, name string, accountType models.AccountType, isActive bool, db *sql.DB) (*models.Account, error) {
 	account, err := repository.GetAccountByID(id, db)
 	if err != nil {
 		return nil, err
@@ -36,6 +38,7 @@ func UpdateAccount(id uuid.UUID, name string, accountType models.AccountType, db
 
 	account.Name = name
 	account.Type = accountType
+	account.IsActive = isActive
 
 	err = repository.UpdateAccount(account, db)
 	if err != nil {
