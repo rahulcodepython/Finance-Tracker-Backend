@@ -25,8 +25,7 @@ import (
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /logs [get]
 func GetLogs(c *fiber.Ctx) error {
-	userID := c.Locals("user_id").(string)
-	userUUID, err := uuid.Parse(userID)
+	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
 	}
@@ -38,7 +37,7 @@ func GetLogs(c *fiber.Ctx) error {
 
 	db := database.DB
 
-	logs, err := services.GetLogs(userUUID, startDateStr, endDateStr, page, limit, db)
+	logs, err := services.GetLogs(userID, startDateStr, endDateStr, page, limit, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to retrieve logs", "error": err.Error()})
 	}

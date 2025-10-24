@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/interfaces"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
 )
@@ -28,7 +29,7 @@ func GetUserByEmail(email string, db interfaces.SqlExecutor) (*models.User, erro
 	return &user, nil
 }
 
-func GetUserByID(id string, db interfaces.SqlExecutor) (*models.User, error) {
+func GetUserByID(id uuid.UUID, db interfaces.SqlExecutor) (*models.User, error) {
 	query := "SELECT * FROM users WHERE id = $1"
 	row := db.QueryRow(query, id)
 

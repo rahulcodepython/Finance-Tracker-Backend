@@ -132,7 +132,7 @@ func Login(email, password string, db *sql.DB, cfg *config.Config) (*models.User
 	return user, token, nil
 }
 
-func ChangePassword(userID, currentPassword, newPassword string, db *sql.DB) error {
+func ChangePassword(userID uuid.UUID, currentPassword, newPassword string, db *sql.DB) error {
 	user, err := repository.GetUserByID(userID, db)
 	if err != nil {
 		return errors.New("user not found")
@@ -160,7 +160,7 @@ func ChangePassword(userID, currentPassword, newPassword string, db *sql.DB) err
 	return nil
 }
 
-func GetProfile(userID string, db *sql.DB) (*models.User, error) {
+func GetProfile(userID uuid.UUID, db *sql.DB) (*models.User, error) {
 	return repository.GetUserByID(userID, db)
 }
 

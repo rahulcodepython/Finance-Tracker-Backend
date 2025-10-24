@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/config"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
@@ -141,7 +142,11 @@ func Login(c *fiber.Ctx) error {
 // @Success 200 {object} map[string]interface{} "Profile retrieved successfully"
 // @Router /auth/profile [get]
 func GetProfile(c *fiber.Ctx) error {
-	userID := c.Locals("user_id").(string)
+	userID, err := uuid.Parse(c.Locals("user_id").(string))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+	}
+
 	db := database.DB
 
 	user, err := services.GetProfile(userID, db)
@@ -174,7 +179,11 @@ func ChangePassword(c *fiber.Ctx) error {
 		return utils.BadInternalResponse(c, err, "Invalid request")
 	}
 
-	userID := c.Locals("user_id").(string)
+	userID, err := uuid.Parse(c.Locals("user_id").(string))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+	}
+
 	db := database.DB
 
 	if err := services.ChangePassword(userID, input.CurrentPassword, input.NewPassword, db); err != nil {
