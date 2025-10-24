@@ -3,7 +3,7 @@ CREATE TYPE transaction_type AS ENUM ('income', 'expense');
 CREATE TYPE auth_provider AS ENUM ('email', 'google');
 CREATE TYPE recurring_frequency AS ENUM ('monthly', 'yearly');
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE users (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE accounts (
+CREATE TABLE IF NOT EXISTS accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
@@ -23,14 +23,14 @@ CREATE TABLE accounts (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
     type transaction_type NOT NULL,
     UNIQUE (name, type)
 );
 
-CREATE TABLE transactions (
+CREATE TABLE IF NOT EXISTS transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
@@ -45,7 +45,7 @@ CREATE TABLE transactions (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE recurring_transactions (
+CREATE TABLE IF NOT EXISTS recurring_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
@@ -59,7 +59,7 @@ CREATE TABLE recurring_transactions (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE budgets (
+CREATE TABLE IF NOT EXISTS budgets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
@@ -68,10 +68,10 @@ CREATE TABLE budgets (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_transactions_user_id_date ON transactions (user_id, transaction_date DESC);
-CREATE INDEX idx_accounts_user_id ON accounts (user_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_id_date ON transactions (user_id, transaction_date DESC);
+CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts (user_id);
 
-CREATE TABLE jwt_tokens (
+CREATE TABLE IF NOT EXISTS jwt_tokens (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     token TEXT UNIQUE NOT NULL,

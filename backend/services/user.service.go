@@ -12,7 +12,30 @@ import (
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
+func CheckUserExistsByEmail(email string, db *sql.DB) (bool, error) {
+	existingUser, err := repository.GetUserByEmail(email, db)
+	if err != nil {
+		return false, err
+	}
+
+	if existingUser != nil {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 func Register(name, email, password string, db *sql.DB, cfg *config.Config) (*models.User, string, error) {
+	exists, err := CheckUserExistsByEmail(email, db)
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	if exists {
+		return nil, "", errors.New("User already exists")
+	}
+
 	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
 		return nil, "", err
@@ -53,11 +76,11 @@ func Register(name, email, password string, db *sql.DB, cfg *config.Config) (*mo
 func Login(email, password string, db *sql.DB, cfg *config.Config) (*models.User, string, error) {
 	user, err := repository.GetUserByEmail(email, db)
 	if err != nil {
-		return nil, "", errors.New("invalid email or password")
+		return nil, "", errors.New("Invalid email or password")
 	}
 
 	if !utils.CheckPasswordHash(password, user.Password) {
-		return nil, "", errors.New("invalid email or password")
+		return nil, "", errors.New("Invalid email or password")
 	}
 
 	jwtToken, err := repository.GetJwtTokenByUserID(db, user.ID)
@@ -97,11 +120,11 @@ func Login(email, password string, db *sql.DB, cfg *config.Config) (*models.User
 func ChangePassword(userID, currentPassword, newPassword string, db *sql.DB) error {
 	user, err := repository.GetUserByID(userID, db)
 	if err != nil {
-		return errors.New("user not found")
+		return errors.New("User not found")
 	}
 
 	if !utils.CheckPasswordHash(currentPassword, user.Password) {
-		return errors.New("invalid current password")
+		return errors.New("Invalid current password")
 	}
 
 	hashedPassword, err := utils.HashPassword(newPassword)

@@ -48,3 +48,19 @@ func UpdateBudget(id uuid.UUID, name string, amount float64, db *sql.DB) (*model
 func DeleteBudget(id uuid.UUID, db *sql.DB) error {
 	return repository.DeleteBudget(id, db)
 }
+
+func CheckBudgetExistsById(id uuid.UUID, db *sql.DB) (bool, error) {
+	budget, err := repository.GetBudgetByID(id, db)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+
+	if budget != nil {
+		return true, nil
+	}
+
+	return false, nil
+}

@@ -8,7 +8,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
-	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
 )
 
@@ -29,12 +28,13 @@ func CreateTransaction(c *fiber.Ctx) error {
 		BudgetID    string  `json:"budgetId"`
 		Description string  `json:"description"`
 		Amount      float64 `json:"amount"`
-		Type        string  `json:"type"`
 		Date        string  `json:"date"`
 		Note        string  `json:"note"`
 	}
 
 	var input CreateTransactionInput
+
+	db := database.DB
 
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
@@ -50,22 +50,18 @@ func CreateTransaction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid account ID", "error": err.Error()})
 	}
 
-	var categoryID uuid.NullUUID
-	if input.CategoryID != "" {
-		parsedCategoryID, err := uuid.Parse(input.CategoryID)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
-		}
-		categoryID = uuid.NullUUID{UUID: parsedCategoryID, Valid: true}
+	categoryID, err := uuid.Parse(input.CategoryID)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
 	}
 
 	var budgetID uuid.NullUUID
 	if input.BudgetID != "" {
-		parsedBudgetID, err := uuid.Parse(input.BudgetID)
+		parsedBudgetId, err := uuid.Parse(input.BudgetID)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid budget ID", "error": err.Error()})
 		}
-		budgetID = uuid.NullUUID{UUID: parsedBudgetID, Valid: true}
+		budgetID = uuid.NullUUID{UUID: parsedBudgetId, Valid: true}
 	}
 
 	transactionDate, err := time.Parse("2006-01-02", input.Date)
@@ -73,9 +69,7 @@ func CreateTransaction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid date format", "error": err.Error()})
 	}
 
-	db := database.DB
-
-	transaction, err := services.CreateTransaction(userID, accountID, categoryID, budgetID, input.Description, input.Amount, models.TransactionType(input.Type), transactionDate, sql.NullString{String: input.Note, Valid: input.Note != ""}, db)
+	transaction, err := services.CreateTransaction(userID, accountID, categoryID, budgetID, input.Description, input.Amount, transactionDate, sql.NullString{String: input.Note, Valid: input.Note != ""}, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to create transaction", "error": err.Error()})
 	}
@@ -141,12 +135,13 @@ func UpdateTransaction(c *fiber.Ctx) error {
 		BudgetID    string  `json:"budgetId"`
 		Description string  `json:"description"`
 		Amount      float64 `json:"amount"`
-		Type        string  `json:"type"`
 		Date        string  `json:"date"`
 		Note        string  `json:"note"`
 	}
 
 	var input UpdateTransactionInput
+
+	db := database.DB
 
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
@@ -162,22 +157,18 @@ func UpdateTransaction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid account ID", "error": err.Error()})
 	}
 
-	var categoryID uuid.NullUUID
-	if input.CategoryID != "" {
-		parsedCategoryID, err := uuid.Parse(input.CategoryID)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
-		}
-		categoryID = uuid.NullUUID{UUID: parsedCategoryID, Valid: true}
+	categoryID, err := uuid.Parse(input.CategoryID)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
 	}
 
 	var budgetID uuid.NullUUID
 	if input.BudgetID != "" {
-		parsedBudgetID, err := uuid.Parse(input.BudgetID)
+		parsedBudgetId, err := uuid.Parse(input.BudgetID)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid budget ID", "error": err.Error()})
 		}
-		budgetID = uuid.NullUUID{UUID: parsedBudgetID, Valid: true}
+		budgetID = uuid.NullUUID{UUID: parsedBudgetId, Valid: true}
 	}
 
 	transactionDate, err := time.Parse("2006-01-02", input.Date)
@@ -185,9 +176,7 @@ func UpdateTransaction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid date format", "error": err.Error()})
 	}
 
-	db := database.DB
-
-	transaction, err := services.UpdateTransaction(transactionID, accountID, categoryID, budgetID, input.Description, input.Amount, models.TransactionType(input.Type), transactionDate, sql.NullString{String: input.Note, Valid: input.Note != ""}, db)
+	transaction, err := services.UpdateTransaction(transactionID, accountID, categoryID, budgetID, input.Description, input.Amount, transactionDate, sql.NullString{String: input.Note, Valid: input.Note != ""}, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to update transaction", "error": err.Error()})
 	}

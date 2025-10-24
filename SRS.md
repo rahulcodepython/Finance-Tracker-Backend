@@ -862,7 +862,7 @@ All API responses will adhere to the following structure:
         }
         ```
 
-- **Endpoint: `GET /api/v1/transactions`**
+- **Endpoint: `GET /api/v1/transactions/`**
 
     - **Description:** Retrieves all transactions for the authenticated user.
     - **Authorization:** Authenticated User
@@ -1137,7 +1137,7 @@ All API responses will adhere to the following structure:
         }
         ```
 
-- **Endpoint: `GET /api/v1/budgets`**
+- **Endpoint: `GET /api/v1/budgets/`**
 
     - **Description:** Retrieves all budgets for the authenticated user.
     - **Authorization:** Authenticated User

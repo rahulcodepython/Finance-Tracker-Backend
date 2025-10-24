@@ -30,6 +30,22 @@ func GetAccounts(userID uuid.UUID, db *sql.DB) ([]models.Account, error) {
 	return repository.GetAccountsByUserID(userID, db)
 }
 
+func CheckAccountExistsById(id uuid.UUID, db *sql.DB) (bool, error) {
+	account, err := repository.GetAccountByID(id, db)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+
+	if account != nil {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 func UpdateAccount(id uuid.UUID, name string, accountType models.AccountType, isActive bool, db *sql.DB) (*models.Account, error) {
 	account, err := repository.GetAccountByID(id, db)
 	if err != nil {

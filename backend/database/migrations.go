@@ -32,7 +32,7 @@ func Migrate(db *sql.DB) {
 		err := CommitExec(trimmedQuery, db)
 		if err != nil {
 			// If a statement fails, we log the error and the problematic query, then stop.
-			log.Printf("Failed to execute command Error: %v", err)
+			log.Printf("Failed to execute command Error: %v for sql query %s", err, trimmedQuery)
 		}
 	}
 

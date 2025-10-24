@@ -47,3 +47,19 @@ func UpdateCategory(id uuid.UUID, name string, categoryType models.TransactionTy
 func DeleteCategory(id uuid.UUID, db *sql.DB) error {
 	return repository.DeleteCategory(id, db)
 }
+
+func CheckCategoryExistsById(id uuid.UUID, db *sql.DB) (bool, error) {
+	category, err := repository.GetCategoryByID(id, db)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+
+	if category != nil {
+		return true, nil
+	}
+
+	return false, nil
+}

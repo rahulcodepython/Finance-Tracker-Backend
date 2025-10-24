@@ -51,10 +51,10 @@ func ProcessRecurringTransactions(db *sql.DB) {
 
 func createTransactionFromRecurring(rt models.RecurringTransaction, db *sql.DB) {
 	t := &models.Transaction{
-		ID:              uuid.New(),
-		UserID:          rt.UserID,
-		AccountID:       rt.AccountID,
-		CategoryID:      rt.CategoryID,
+		ID:        uuid.New(),
+		UserID:    rt.UserID,
+		AccountID: rt.AccountID,
+		// CategoryID:      rt.CategoryID,
 		Description:     rt.Description,
 		Amount:          rt.Amount,
 		Type:            rt.Type,

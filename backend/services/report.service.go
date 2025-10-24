@@ -62,14 +62,9 @@ func ExportTransactions(userID uuid.UUID, writer io.Writer, db *sql.DB) error {
 			transaction.ID.String(),
 			transaction.TransactionDate.Format("2006-01-02"),
 			transaction.Description,
+			transaction.CategoryID.String(),
 			fmt.Sprintf("%.2f", transaction.Amount),
 			string(transaction.Type),
-		}
-
-		if transaction.CategoryID.Valid {
-			row = append(row, categoryMap[transaction.CategoryID.UUID])
-		} else {
-			row = append(row, "")
 		}
 
 		account, err := repository.GetAccountByID(transaction.AccountID, db)
