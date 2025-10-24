@@ -8,6 +8,7 @@ import (
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
 // CreateRecurringTransaction godoc
@@ -35,29 +36,29 @@ func CreateRecurringTransaction(c *fiber.Ctx) error {
 	var input CreateRecurringTransactionInput
 
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid request")
 	}
 
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
 	accountID, err := uuid.Parse(input.AccountID)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid account ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid account ID")
 	}
 
 	categoryID, err := uuid.Parse(input.CategoryID)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid category ID")
 	}
 
 	var budgetID uuid.NullUUID
 	if input.BudgetID != "" {
 		parsedBudgetId, err := uuid.Parse(input.BudgetID)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid budget ID", "error": err.Error()})
+			return utils.BadResponse(c, err, "Invalid budget ID")
 		}
 		budgetID = uuid.NullUUID{UUID: parsedBudgetId, Valid: true}
 	}
@@ -66,10 +67,10 @@ func CreateRecurringTransaction(c *fiber.Ctx) error {
 
 	recurringTransaction, err := services.CreateRecurringTransaction(userID, accountID, categoryID, budgetID, input.Description, input.Amount, sql.NullString{String: input.Note, Valid: input.Note != ""}, input.RecurringFrequency, input.RecurringDate, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to create recurring transaction", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to create recurring transaction")
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"success": true, "message": "Recurring transaction created successfully", "data": recurringTransaction})
+	return utils.OKCreatedResponse(c, "Recurring transaction created successfully", recurringTransaction)
 }
 
 // GetRecurringTransactions godoc
@@ -83,17 +84,17 @@ func CreateRecurringTransaction(c *fiber.Ctx) error {
 func GetRecurringTransactions(c *fiber.Ctx) error {
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
 	db := database.DB
 
 	recurringTransactions, err := services.GetRecurringTransactions(userID, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to get recurring transactions", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to get recurring transactions")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Recurring transactions retrieved successfully", "data": recurringTransactions})
+	return utils.OKResponse(c, "Recurring transactions retrieved successfully", recurringTransactions)
 }
 
 // UpdateRecurringTransaction godoc
@@ -122,29 +123,29 @@ func UpdateRecurringTransaction(c *fiber.Ctx) error {
 	var input UpdateRecurringTransactionInput
 
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid request")
 	}
 
 	recurringTransactionID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid recurring transaction ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid recurring transaction ID")
 	}
 
 	accountID, err := uuid.Parse(input.AccountID)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid account ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid account ID")
 	}
 
 	categoryID, err := uuid.Parse(input.CategoryID)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid category ID")
 	}
 
 	var budgetID uuid.NullUUID
 	if input.BudgetID != "" {
 		parsedBudgetId, err := uuid.Parse(input.BudgetID)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid budget ID", "error": err.Error()})
+			return utils.BadResponse(c, err, "Invalid budget ID")
 		}
 		budgetID = uuid.NullUUID{UUID: parsedBudgetId, Valid: true}
 	}
@@ -153,10 +154,10 @@ func UpdateRecurringTransaction(c *fiber.Ctx) error {
 
 	recurringTransaction, err := services.UpdateRecurringTransaction(recurringTransactionID, accountID, categoryID, budgetID, input.Description, input.Amount, sql.NullString{String: input.Note, Valid: input.Note != ""}, input.RecurringFrequency, input.RecurringDate, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to update recurring transaction", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to update recurring transaction")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Recurring transaction updated successfully", "data": recurringTransaction})
+	return utils.OKResponse(c, "Recurring transaction updated successfully", recurringTransaction)
 }
 
 // DeleteRecurringTransaction godoc
@@ -171,14 +172,14 @@ func UpdateRecurringTransaction(c *fiber.Ctx) error {
 func DeleteRecurringTransaction(c *fiber.Ctx) error {
 	recurringTransactionID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid recurring transaction ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid recurring transaction ID")
 	}
 
 	db := database.DB
 
 	if err := services.DeleteRecurringTransaction(recurringTransactionID, db); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to delete recurring transaction", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to delete recurring transaction")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Recurring transaction deleted successfully"})
+	return utils.OKResponse(c, "Recurring transaction deleted successfully", nil)
 }

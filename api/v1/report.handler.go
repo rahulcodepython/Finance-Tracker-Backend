@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
 // GenerateReport godoc
@@ -20,7 +21,7 @@ import (
 func GenerateReport(c *fiber.Ctx) error {
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 	from := c.Query("from")
 	to := c.Query("to")
@@ -29,10 +30,10 @@ func GenerateReport(c *fiber.Ctx) error {
 
 	report, err := services.GenerateReport(userID, from, to, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to generate report", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to generate report")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Report generated successfully", "data": report})
+	return utils.OKResponse(c, "Report generated successfully", report)
 }
 
 // ExportTransactions godoc
@@ -48,7 +49,7 @@ func GenerateReport(c *fiber.Ctx) error {
 func ExportTransactions(c *fiber.Ctx) error {
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
 	db := database.DB
@@ -57,7 +58,7 @@ func ExportTransactions(c *fiber.Ctx) error {
 	c.Set("Content-Disposition", "attachment; filename=transactions.csv")
 
 	if err := services.ExportTransactions(userID, c.Response().BodyWriter(), db); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to export transactions", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to export transactions")
 	}
 
 	return nil

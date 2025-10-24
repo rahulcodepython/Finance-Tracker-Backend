@@ -6,6 +6,7 @@ import (
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
 // CreateAccount godoc
@@ -28,22 +29,22 @@ func CreateAccount(c *fiber.Ctx) error {
 	var input CreateAccountInput
 
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid request")
 	}
 
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
 	db := database.DB
 
 	account, err := services.CreateAccount(userID, input.Name, models.AccountType(input.Type), input.Balance, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to create account", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to create account")
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"success": true, "message": "Account created successfully", "data": account})
+	return utils.OKCreatedResponse(c, "Account created successfully", account)
 }
 
 // GetAccounts godoc
@@ -57,17 +58,17 @@ func CreateAccount(c *fiber.Ctx) error {
 func GetAccounts(c *fiber.Ctx) error {
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
 	db := database.DB
 
 	accounts, err := services.GetAccounts(userID, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to get accounts", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to get accounts")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Accounts retrieved successfully", "data": accounts})
+	return utils.OKCreatedResponse(c, "Accounts retrieved successfully", accounts)
 }
 
 // UpdateAccount godoc
@@ -91,22 +92,22 @@ func UpdateAccount(c *fiber.Ctx) error {
 	var input UpdateAccountInput
 
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid request")
 	}
 
 	accountID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid account ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid account ID")
 	}
 
 	db := database.DB
 
 	account, err := services.UpdateAccount(accountID, input.Name, models.AccountType(input.Type), input.IsActive, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to update account", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to update account")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Account updated successfully", "data": account})
+	return utils.OKResponse(c, "Account updated successfully", account)
 }
 
 // DeleteAccount godoc
@@ -121,16 +122,16 @@ func UpdateAccount(c *fiber.Ctx) error {
 func DeleteAccount(c *fiber.Ctx) error {
 	accountID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid account ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid account ID")
 	}
 
 	db := database.DB
 
 	if err := services.DeleteAccount(accountID, db); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to delete account", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to delete account")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Account deleted successfully"})
+	return utils.OKResponse(c, "Account deleted successfully", nil)
 }
 
 // GetTotalBalance godoc
@@ -144,15 +145,15 @@ func DeleteAccount(c *fiber.Ctx) error {
 func GetTotalBalance(c *fiber.Ctx) error {
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
 	db := database.DB
 
 	totalBalance, err := services.GetTotalBalance(userID, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to get total balance", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to get total balance")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Total balance retrieved successfully", "data": totalBalance})
+	return utils.OKResponse(c, "Total balance retrieved successfully", totalBalance)
 }

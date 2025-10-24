@@ -6,6 +6,7 @@ import (
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
 // CreateCategory godoc
@@ -27,22 +28,22 @@ func CreateCategory(c *fiber.Ctx) error {
 	var input CreateCategoryInput
 
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid request")
 	}
 
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
 	db := database.DB
 
 	category, err := services.CreateCategory(input.Name, models.TransactionType(input.Type), userID, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to create category", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to create category")
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"success": true, "message": "Category created successfully", "data": category})
+	return utils.OKCreatedResponse(c, "Category created successfully", category)
 }
 
 // GetCategories godoc
@@ -57,10 +58,10 @@ func GetCategories(c *fiber.Ctx) error {
 	db := database.DB
 	categories, err := services.GetCategories(db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to get categories", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to get categories")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Categories retrieved successfully", "data": categories})
+	return utils.OKResponse(c, "Categories retrieved successfully", categories)
 }
 
 // UpdateCategory godoc
@@ -83,27 +84,27 @@ func UpdateCategory(c *fiber.Ctx) error {
 	var input UpdateCategoryInput
 
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid request")
 	}
 
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
 	categoryID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid category ID")
 	}
 
 	db := database.DB
 
 	category, err := services.UpdateCategory(categoryID, input.Name, models.TransactionType(input.Type), userID, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to update category", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to update category")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Category updated successfully", "data": category})
+	return utils.OKResponse(c, "Category updated successfully", category)
 }
 
 // DeleteCategory godoc
@@ -118,19 +119,19 @@ func UpdateCategory(c *fiber.Ctx) error {
 func DeleteCategory(c *fiber.Ctx) error {
 	categoryID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid category ID")
 	}
 
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
 	db := database.DB
 
 	if err := services.DeleteCategory(categoryID, userID, db); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to delete category", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to delete category")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Category deleted successfully"})
+	return utils.OKResponse(c, "Category deleted successfully", nil)
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
 // CreateBudget godoc
@@ -26,22 +27,22 @@ func CreateBudget(c *fiber.Ctx) error {
 	var input CreateBudgetInput
 
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid request")
 	}
 
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
 	db := database.DB
 
 	budget, err := services.CreateBudget(userID, input.Name, input.Amount, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to create budget", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to create budget")
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"success": true, "message": "Budget created successfully", "data": budget})
+	return utils.OKCreatedResponse(c, "Budget created successfully", budget)
 }
 
 // GetBudgets godoc
@@ -55,17 +56,17 @@ func CreateBudget(c *fiber.Ctx) error {
 func GetBudgets(c *fiber.Ctx) error {
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
 	db := database.DB
 
 	budgets, err := services.GetBudgets(userID, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to get budgets", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to get budgets")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Budgets retrieved successfully", "data": budgets})
+	return utils.OKResponse(c, "Budgets retrieved successfully", budgets)
 }
 
 // UpdateBudget godoc
@@ -88,22 +89,22 @@ func UpdateBudget(c *fiber.Ctx) error {
 	var input UpdateBudgetInput
 
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid request")
 	}
 
 	budgetID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid budget ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid budget ID")
 	}
 
 	db := database.DB
 
 	budget, err := services.UpdateBudget(budgetID, input.Name, input.Amount, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to update budget", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to update budget")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Budget updated successfully", "data": budget})
+	return utils.OKResponse(c, "Budget updated successfully", budget)
 }
 
 // DeleteBudget godoc
@@ -118,14 +119,14 @@ func UpdateBudget(c *fiber.Ctx) error {
 func DeleteBudget(c *fiber.Ctx) error {
 	budgetID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid budget ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid budget ID")
 	}
 
 	db := database.DB
 
 	if err := services.DeleteBudget(budgetID, db); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to delete budget", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to delete budget")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Budget deleted successfully"})
+	return utils.OKResponse(c, "Budget deleted successfully", nil)
 }

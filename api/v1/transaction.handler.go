@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
 // CreateTransaction godoc
@@ -37,44 +38,44 @@ func CreateTransaction(c *fiber.Ctx) error {
 	db := database.DB
 
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid request")
 	}
 
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
 	accountID, err := uuid.Parse(input.AccountID)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid account ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid account ID")
 	}
 
 	categoryID, err := uuid.Parse(input.CategoryID)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid category ID")
 	}
 
 	var budgetID uuid.NullUUID
 	if input.BudgetID != "" {
 		parsedBudgetId, err := uuid.Parse(input.BudgetID)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid budget ID", "error": err.Error()})
+			return utils.BadResponse(c, err, "Invalid budget ID")
 		}
 		budgetID = uuid.NullUUID{UUID: parsedBudgetId, Valid: true}
 	}
 
 	transactionDate, err := time.Parse("2006-01-02", input.Date)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid date format", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid date format")
 	}
 
 	transaction, err := services.CreateTransaction(userID, accountID, categoryID, budgetID, input.Description, input.Amount, transactionDate, sql.NullString{String: input.Note, Valid: input.Note != ""}, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to create transaction", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to create transaction")
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"success": true, "message": "Transaction created successfully", "data": transaction})
+	return utils.OKCreatedResponse(c, "Transaction created successfully", transaction)
 }
 
 // GetTransactions godoc
@@ -96,7 +97,7 @@ func CreateTransaction(c *fiber.Ctx) error {
 func GetTransactions(c *fiber.Ctx) error {
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	limit, _ := strconv.Atoi(c.Query("limit", "10"))
@@ -111,10 +112,10 @@ func GetTransactions(c *fiber.Ctx) error {
 
 	transactions, err := services.GetTransactions(userID, page, limit, description, categoryID, accountID, budgetID, startDate, endDate, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to get transactions", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to get transactions")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Transactions retrieved successfully", "data": transactions})
+	return utils.OKResponse(c, "Transactions retrieved successfully", transactions)
 }
 
 // UpdateTransaction godoc
@@ -144,44 +145,44 @@ func UpdateTransaction(c *fiber.Ctx) error {
 	db := database.DB
 
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid request")
 	}
 
 	transactionID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid transaction ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid transaction ID")
 	}
 
 	accountID, err := uuid.Parse(input.AccountID)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid account ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid account ID")
 	}
 
 	categoryID, err := uuid.Parse(input.CategoryID)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid category ID")
 	}
 
 	var budgetID uuid.NullUUID
 	if input.BudgetID != "" {
 		parsedBudgetId, err := uuid.Parse(input.BudgetID)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid budget ID", "error": err.Error()})
+			return utils.BadResponse(c, err, "Invalid budget ID")
 		}
 		budgetID = uuid.NullUUID{UUID: parsedBudgetId, Valid: true}
 	}
 
 	transactionDate, err := time.Parse("2006-01-02", input.Date)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid date format", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid date format")
 	}
 
 	transaction, err := services.UpdateTransaction(transactionID, accountID, categoryID, budgetID, input.Description, input.Amount, transactionDate, sql.NullString{String: input.Note, Valid: input.Note != ""}, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to update transaction", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to update transaction")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Transaction updated successfully", "data": transaction})
+	return utils.OKResponse(c, "Transaction updated successfully", transaction)
 }
 
 // DeleteTransaction godoc
@@ -196,16 +197,16 @@ func UpdateTransaction(c *fiber.Ctx) error {
 func DeleteTransaction(c *fiber.Ctx) error {
 	transactionID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid transaction ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid transaction ID")
 	}
 
 	db := database.DB
 
 	if err := services.DeleteTransaction(transactionID, db); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to delete transaction", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to delete transaction")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Transaction deleted successfully"})
+	return utils.OKResponse(c, "Transaction deleted successfully", nil)
 }
 
 // GetAggregateData godoc
@@ -221,7 +222,7 @@ func DeleteTransaction(c *fiber.Ctx) error {
 func GetAggregateData(c *fiber.Ctx) error {
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 	startDate := c.Query("startDate")
 	endDate := c.Query("endDate")
@@ -230,8 +231,8 @@ func GetAggregateData(c *fiber.Ctx) error {
 
 	data, err := services.GetAggregateData(userID, startDate, endDate, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to get aggregate data", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to get aggregate data")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Aggregate data retrieved successfully", "data": data})
+	return utils.OKResponse(c, "Aggregate data retrieved successfully", data)
 }

@@ -22,15 +22,11 @@ func Setup(app *fiber.App) {
 		// Call the modified Ping function and check its error
 		if err := utils.Ping(db); err != nil {
 			// If ping fails, return a 503 Service Unavailable error
-			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
-				"success": false,
-				"message": "Database connection error",
-				"error":   err.Error(),
-			})
+			return utils.InternalServerError(c, err, "Database connection error")
 		}
 
 		// If ping is successful, return the normal response
-		return c.JSON(fiber.Map{"success": true, "message": "Welcome to the Finance Tracker API"})
+		return utils.OKResponse(c, "Welcome to the Finance Tracker API", nil)
 	})
 
 	auth := v1Api.Group("/auth")

@@ -20,11 +20,19 @@ type response struct {
 // @param err error - The error that occurred.
 // @param message string - A message to be included in the response.
 // @return error - An error if one occurred while sending the response.
-func InternelServerError(c *fiber.Ctx, err error, message string) error {
+func InternalServerError(c *fiber.Ctx, err error, message string) error {
 	// This checks if a custom message is provided.
 	if message == "" {
 		// If no message is provided, a default message is used.
 		message = "Internal Server Error"
+	}
+
+	var errMessage string
+
+	if err != nil {
+		errMessage = err.Error()
+	} else {
+		errMessage = ""
 	}
 
 	// c.Status() sets the HTTP status code of the response.
@@ -35,33 +43,7 @@ func InternelServerError(c *fiber.Ctx, err error, message string) error {
 		// The message is included in the response.
 		Message: message,
 		// The error message is included in the response.
-		Error: err.Error(),
-	})
-}
-
-// BadInternalResponse sends a 400 Bad Request response.
-// It takes the Fiber context, an error, and a message as input.
-//
-// @param c *fiber.Ctx - The Fiber context.
-// @param err error - The error that occurred.
-// @param message string - A message to be included in the response.
-// @return error - An error if one occurred while sending the response.
-func BadInternalResponse(c *fiber.Ctx, err error, message string) error {
-	// This checks if a custom message is provided.
-	if message == "" {
-		// If no message is provided, a default message is used.
-		message = "Bad Request"
-	}
-
-	// c.Status() sets the HTTP status code of the response.
-	// c.JSON() sends a JSON response.
-	return c.Status(fiber.StatusBadRequest).JSON(response{
-		// Success is set to false to indicate that the request was not successful.
-		Success: false,
-		// The message is included in the response.
-		Message: message,
-		// The error message is included in the response.
-		Error: err.Error(),
+		Error: errMessage,
 	})
 }
 
@@ -113,6 +95,14 @@ func NotFound(c *fiber.Ctx, err error, message string) error {
 		message = "Not Found"
 	}
 
+	var errMessage string
+
+	if err != nil {
+		errMessage = err.Error()
+	} else {
+		errMessage = ""
+	}
+
 	// c.Status() sets the HTTP status code of the response.
 	// c.JSON() sends a JSON response.
 	return c.Status(fiber.StatusNotFound).JSON(response{
@@ -121,7 +111,7 @@ func NotFound(c *fiber.Ctx, err error, message string) error {
 		// The message is included in the response.
 		Message: message,
 		// The error message is included in the response.
-		Error: err.Error(),
+		Error: errMessage,
 	})
 }
 
@@ -131,11 +121,19 @@ func NotFound(c *fiber.Ctx, err error, message string) error {
 // @param c *fiber.Ctx - The Fiber context.
 // @param message string - A message to be included in the response.
 // @return error - An error if one occurred while sending the response.
-func BadResponse(c *fiber.Ctx, message string) error {
+func BadResponse(c *fiber.Ctx, err error, message string) error {
 	// This checks if a custom message is provided.
 	if message == "" {
 		// If no message is provided, a default message is used.
 		message = "Bad Request"
+	}
+
+	var errMessage string
+
+	if err != nil {
+		errMessage = err.Error()
+	} else {
+		errMessage = ""
 	}
 
 	// c.Status() sets the HTTP status code of the response.
@@ -145,6 +143,7 @@ func BadResponse(c *fiber.Ctx, message string) error {
 		Success: false,
 		// The message is included in the response.
 		Message: message,
+		Error:   errMessage,
 	})
 }
 

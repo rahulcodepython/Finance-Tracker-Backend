@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
 // GetDashboardSummary godoc
@@ -20,7 +21,7 @@ import (
 func GetDashboardSummary(c *fiber.Ctx) error {
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
 	page, _ := strconv.Atoi(c.Query("page", "1"))
@@ -36,8 +37,8 @@ func GetDashboardSummary(c *fiber.Ctx) error {
 
 	summary, err := services.GetDashboardSummary(userID, page, limit, description, categoryID, accountID, budgetID, startDate, endDate, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to get dashboard summary", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to get dashboard summary")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Dashboard data retrieved successfully", "data": summary})
+	return utils.OKResponse(c, "Dashboard data retrieved successfully", summary)
 }

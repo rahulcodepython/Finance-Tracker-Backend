@@ -40,29 +40,29 @@ func GoogleCallback(c *fiber.Ctx) error {
 
 	token, err := cfg.GoogleOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
-		return utils.InternelServerError(c, err, "Failed to exchange token")
+		return utils.InternalServerError(c, err, "Failed to exchange token")
 	}
 
 	response, err := cfg.GoogleOauthConfig.Client(context.Background(), token).Get("https://www.googleapis.com/oauth2/v2/userinfo")
 	if err != nil {
-		return utils.InternelServerError(c, err, "Failed to get user info")
+		return utils.InternalServerError(c, err, "Failed to get user info")
 	}
 
 	defer response.Body.Close()
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return utils.InternelServerError(c, err, "Failed to read user info")
+		return utils.InternalServerError(c, err, "Failed to read user info")
 	}
 
 	var userInfo map[string]interface{}
 	if err := json.Unmarshal(body, &userInfo); err != nil {
-		return utils.InternelServerError(c, err, "Failed to parse user info")
+		return utils.InternalServerError(c, err, "Failed to parse user info")
 	}
 
 	user, jwt, err := services.GoogleLogin(userInfo["email"].(string), userInfo["name"].(string), db, cfg)
 	if err != nil {
-		return utils.InternelServerError(c, err, "Failed to login with Google")
+		return utils.InternalServerError(c, err, "Failed to login with Google")
 	}
 
 	return utils.OKResponse(c, "Login successful", fiber.Map{"user": user, "token": jwt})
@@ -87,7 +87,7 @@ func Register(c *fiber.Ctx) error {
 	var input RegisterInput
 
 	if err := c.BodyParser(&input); err != nil {
-		return utils.BadInternalResponse(c, err, "Invalid request")
+		return utils.BadResponse(c, err, "Invalid request")
 	}
 
 	db := database.DB
@@ -95,7 +95,7 @@ func Register(c *fiber.Ctx) error {
 
 	user, token, err := services.Register(input.Name, input.Email, input.Password, db, cfg)
 	if err != nil {
-		return utils.InternelServerError(c, err, "Failed to create user")
+		return utils.InternalServerError(c, err, "Failed to create user")
 	}
 
 	return utils.OKCreatedResponse(c, "User registered successfully", fiber.Map{"user": user, "token": token})
@@ -119,7 +119,7 @@ func Login(c *fiber.Ctx) error {
 	var input LoginInput
 
 	if err := c.BodyParser(&input); err != nil {
-		return utils.BadInternalResponse(c, err, "Invalid request")
+		return utils.BadResponse(c, err, "Invalid request")
 	}
 
 	db := database.DB
@@ -144,7 +144,7 @@ func Login(c *fiber.Ctx) error {
 func GetProfile(c *fiber.Ctx) error {
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
 	db := database.DB
@@ -176,18 +176,18 @@ func ChangePassword(c *fiber.Ctx) error {
 	var input ChangePasswordInput
 
 	if err := c.BodyParser(&input); err != nil {
-		return utils.BadInternalResponse(c, err, "Invalid request")
+		return utils.BadResponse(c, err, "Invalid request")
 	}
 
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
 	db := database.DB
 
 	if err := services.ChangePassword(userID, input.CurrentPassword, input.NewPassword, db); err != nil {
-		return utils.InternelServerError(c, err, "Failed to change password")
+		return utils.InternalServerError(c, err, "Failed to change password")
 	}
 
 	return utils.OKResponse(c, "Password changed successfully", nil)

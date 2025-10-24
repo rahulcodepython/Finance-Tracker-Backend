@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
 // GetLogs godoc
@@ -27,7 +28,7 @@ import (
 func GetLogs(c *fiber.Ctx) error {
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
 	page, _ := strconv.Atoi(c.Query("page", "1"))
@@ -39,8 +40,8 @@ func GetLogs(c *fiber.Ctx) error {
 
 	logs, err := services.GetLogs(userID, startDateStr, endDateStr, page, limit, db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to retrieve logs", "error": err.Error()})
+		return utils.InternalServerError(c, err, "Failed to retrieve logs")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "Activity logs retrieved successfully", "data": logs})
+	return utils.OKResponse(c, "Activity logs retrieved successfully", logs)
 }
