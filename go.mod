@@ -3,6 +3,7 @@ module github.com/rahulcodepython/finance-tracker-backend
 go 1.24.0
 
 require (
+	github.com/fatih/color v1.18.0
 	github.com/go-co-op/gocron v1.37.0
 	github.com/gofiber/fiber/v2 v2.40.1
 	github.com/golang-jwt/jwt/v4 v4.4.3
