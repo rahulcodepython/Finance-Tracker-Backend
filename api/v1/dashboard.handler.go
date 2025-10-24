@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
@@ -21,9 +23,18 @@ func GetDashboardSummary(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
 	}
 
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	limit, _ := strconv.Atoi(c.Query("limit", "10"))
+	description := c.Query("description")
+	categoryID := c.Query("category")
+	accountID := c.Query("account")
+	budgetID := c.Query("budget")
+	startDate := c.Query("startDate")
+	endDate := c.Query("endDate")
+
 	db := database.DB
 
-	summary, err := services.GetDashboardSummary(userID, db)
+	summary, err := services.GetDashboardSummary(userID, page, limit, description, categoryID, accountID, budgetID, startDate, endDate, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to get dashboard summary", "error": err.Error()})
 	}

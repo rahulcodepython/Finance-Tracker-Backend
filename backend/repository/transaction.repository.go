@@ -6,16 +6,17 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/interfaces"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
 )
 
-func CreateTransaction(transaction *models.Transaction, db *sql.DB) error {
+func CreateTransaction(transaction *models.Transaction, db interfaces.SqlExecutor) error {
 	query := fmt.Sprintf("INSERT INTO transactions (%s) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)", models.TransactionColumns)
 	_, err := db.Exec(query, transaction.ID, transaction.UserID, transaction.AccountID, transaction.CategoryID, transaction.BudgetID, transaction.Description, transaction.Amount, transaction.Type, transaction.TransactionDate, transaction.Note, transaction.CreatedAt, transaction.UpdatedAt)
 	return err
 }
 
-func GetTransactionsByUserID(userID uuid.UUID, db *sql.DB) ([]models.Transaction, error) {
+func GetTransactionsByUserID(userID uuid.UUID, db interfaces.SqlExecutor) ([]models.Transaction, error) {
 	query := "SELECT * FROM transactions WHERE user_id = $1"
 	rows, err := db.Query(query, userID)
 	if err != nil {
@@ -34,12 +35,13 @@ func GetTransactionsByUserID(userID uuid.UUID, db *sql.DB) ([]models.Transaction
 	return transactions, nil
 }
 
-func GetTransactionByID(id uuid.UUID, db *sql.DB) (*models.Transaction, error) {
+func GetTransactionByID(id uuid.UUID, db interfaces.SqlExecutor) (*models.Transaction, error) {
 	query := "SELECT * FROM transactions WHERE id = $1"
 	row := db.QueryRow(query, id)
 
 	var transaction models.Transaction
-			if err := row.Scan(&transaction.ID, &transaction.UserID, &transaction.AccountID, &transaction.CategoryID, &transaction.BudgetID, &transaction.Description, &transaction.Amount, &transaction.Type, &transaction.TransactionDate, &transaction.Note, &transaction.CreatedAt, &transaction.UpdatedAt); err != nil {		if err == sql.ErrNoRows {
+	if err := row.Scan(&transaction.ID, &transaction.UserID, &transaction.AccountID, &transaction.CategoryID, &transaction.BudgetID, &transaction.Description, &transaction.Amount, &transaction.Type, &transaction.TransactionDate, &transaction.Note, &transaction.CreatedAt, &transaction.UpdatedAt); err != nil {
+		if err == sql.ErrNoRows {
 			return nil, nil // Or a custom not found error
 		}
 		return nil, err
@@ -47,19 +49,19 @@ func GetTransactionByID(id uuid.UUID, db *sql.DB) (*models.Transaction, error) {
 	return &transaction, nil
 }
 
-func UpdateTransaction(transaction *models.Transaction, db *sql.DB) error {
+func UpdateTransaction(transaction *models.Transaction, db interfaces.SqlExecutor) error {
 	query := "UPDATE transactions SET account_id = $1, category_id = $2, budget_id = $3, description = $4, amount = $5, type = $6, transaction_date = $7, note = $8, updated_at = $9 WHERE id = $10"
 	_, err := db.Exec(query, transaction.AccountID, transaction.CategoryID, transaction.BudgetID, transaction.Description, transaction.Amount, transaction.Type, transaction.TransactionDate, transaction.Note, transaction.UpdatedAt, transaction.ID)
 	return err
 }
 
-func DeleteTransaction(id uuid.UUID, db *sql.DB) error {
+func DeleteTransaction(id uuid.UUID, db interfaces.SqlExecutor) error {
 	query := "DELETE FROM transactions WHERE id = $1"
 	_, err := db.Exec(query, id)
 	return err
 }
 
-func GetTransactionsByUserIDWithFilters(userID uuid.UUID, page int, limit int, description string, categoryID string, accountID string, budgetID string, startDate string, endDate string, db *sql.DB) ([]models.Transaction, error) {
+func GetTransactionsByUserIDWithFilters(userID uuid.UUID, page int, limit int, description string, categoryID string, accountID string, budgetID string, startDate string, endDate string, db interfaces.SqlExecutor) ([]models.Transaction, error) {
 	var query strings.Builder
 	query.WriteString("SELECT id, user_id, account_id, category_id, budget_id, description, amount, type, transaction_date, note, created_at, updated_at FROM transactions WHERE user_id = $1")
 
@@ -121,7 +123,7 @@ func GetTransactionsByUserIDWithFilters(userID uuid.UUID, page int, limit int, d
 	return transactions, nil
 }
 
-func GetAggregateDataByUserID(userID uuid.UUID, startDate string, endDate string, db *sql.DB) (map[string]interface{}, error) {
+func GetAggregateDataByUserID(userID uuid.UUID, startDate string, endDate string, db interfaces.SqlExecutor) (map[string]interface{}, error) {
 	var totalIncome float64
 	var totalExpenses float64
 
@@ -157,8 +159,29 @@ func GetAggregateDataByUserID(userID uuid.UUID, startDate string, endDate string
 	}, nil
 }
 
-func GetSpendingByCategory(userID uuid.UUID, db *sql.DB) ([]map[string]interface{}, error) {
+func GetSpendingByCategory(userID uuid.UUID, db interfaces.SqlExecutor) ([]map[string]interface{}, error) {
 	query := "SELECT c.name as category, sum(t.amount) as amount FROM transactions t JOIN categories c ON c.id = t.category_id WHERE t.user_id = $1 AND t.type = 'expense' GROUP BY c.name"
+	rows, err := db.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []map[string]interface{}
+	for rows.Next() {
+		var category string
+		var amount float64
+		if err := rows.Scan(&category, &amount); err != nil {
+			return nil, err
+		}
+		result = append(result, map[string]interface{}{"category": category, "amount": amount})
+	}
+
+	return result, nil
+}
+
+func GetEarningByCategory(userID uuid.UUID, db interfaces.SqlExecutor) ([]map[string]interface{}, error) {
+	query := "SELECT c.name as category, sum(t.amount) as amount FROM transactions t JOIN categories c ON c.id = t.category_id WHERE t.user_id = $1 AND t.type = 'income' GROUP BY c.name"
 	rows, err := db.Query(query, userID)
 	if err != nil {
 		return nil, err

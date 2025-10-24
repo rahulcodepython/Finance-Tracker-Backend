@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"database/sql"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
@@ -22,9 +24,10 @@ func CreateRecurringTransaction(c *fiber.Ctx) error {
 	type CreateRecurringTransactionInput struct {
 		AccountID          string                    `json:"accountId"`
 		CategoryID         string                    `json:"categoryId"`
+		BudgetID           string                    `json:"budgetId"`
 		Description        string                    `json:"description"`
 		Amount             float64                   `json:"amount"`
-		Type               string                    `json:"type"`
+		Note               string                    `json:"note"`
 		RecurringFrequency models.RecurringFrequency `json:"recurringFrequency"`
 		RecurringDate      int                       `json:"recurringDate"`
 	}
@@ -50,9 +53,18 @@ func CreateRecurringTransaction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
 	}
 
+	var budgetID uuid.NullUUID
+	if input.BudgetID != "" {
+		parsedBudgetId, err := uuid.Parse(input.BudgetID)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid budget ID", "error": err.Error()})
+		}
+		budgetID = uuid.NullUUID{UUID: parsedBudgetId, Valid: true}
+	}
+
 	db := database.DB
 
-	recurringTransaction, err := services.CreateRecurringTransaction(userID, accountID, categoryID, input.Description, input.Amount, models.TransactionType(input.Type), input.RecurringFrequency, input.RecurringDate, db)
+	recurringTransaction, err := services.CreateRecurringTransaction(userID, accountID, categoryID, budgetID, input.Description, input.Amount, sql.NullString{String: input.Note, Valid: input.Note != ""}, input.RecurringFrequency, input.RecurringDate, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to create recurring transaction", "error": err.Error()})
 	}
@@ -99,9 +111,10 @@ func UpdateRecurringTransaction(c *fiber.Ctx) error {
 	type UpdateRecurringTransactionInput struct {
 		AccountID          string                    `json:"accountId"`
 		CategoryID         string                    `json:"categoryId"`
+		BudgetID           string                    `json:"budgetId"`
 		Description        string                    `json:"description"`
 		Amount             float64                   `json:"amount"`
-		Type               string                    `json:"type"`
+		Note               string                    `json:"note"`
 		RecurringFrequency models.RecurringFrequency `json:"recurringFrequency"`
 		RecurringDate      int                       `json:"recurringDate"`
 	}
@@ -127,9 +140,18 @@ func UpdateRecurringTransaction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
 	}
 
+	var budgetID uuid.NullUUID
+	if input.BudgetID != "" {
+		parsedBudgetId, err := uuid.Parse(input.BudgetID)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid budget ID", "error": err.Error()})
+		}
+		budgetID = uuid.NullUUID{UUID: parsedBudgetId, Valid: true}
+	}
+
 	db := database.DB
 
-	recurringTransaction, err := services.UpdateRecurringTransaction(recurringTransactionID, accountID, categoryID, input.Description, input.Amount, models.TransactionType(input.Type), input.RecurringFrequency, input.RecurringDate, db)
+	recurringTransaction, err := services.UpdateRecurringTransaction(recurringTransactionID, accountID, categoryID, budgetID, input.Description, input.Amount, sql.NullString{String: input.Note, Valid: input.Note != ""}, input.RecurringFrequency, input.RecurringDate, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to update recurring transaction", "error": err.Error()})
 	}

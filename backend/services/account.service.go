@@ -2,10 +2,12 @@ package services
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/repository"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
 func CreateAccount(userID uuid.UUID, name string, accountType models.AccountType, balance float64, db *sql.DB) (*models.Account, error) {
@@ -52,9 +54,14 @@ func UpdateAccount(id uuid.UUID, name string, accountType models.AccountType, is
 		return nil, err
 	}
 
+	if account == nil {
+		return nil, sql.ErrNoRows
+	}
+
 	account.Name = name
 	account.Type = accountType
 	account.IsActive = isActive
+	account.UpdatedAt = time.Now().In(utils.LOC)
 
 	err = repository.UpdateAccount(account, db)
 	if err != nil {
@@ -65,6 +72,15 @@ func UpdateAccount(id uuid.UUID, name string, accountType models.AccountType, is
 }
 
 func DeleteAccount(id uuid.UUID, db *sql.DB) error {
+	account, err := repository.GetAccountByID(id, db)
+	if err != nil {
+		return err
+	}
+
+	if account == nil {
+		return sql.ErrNoRows
+	}
+
 	return repository.DeleteAccount(id, db)
 }
 

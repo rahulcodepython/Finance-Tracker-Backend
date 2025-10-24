@@ -949,7 +949,7 @@ All API responses will adhere to the following structure:
 
 ### **`/api/v1/dashboard`**
 
-- **Endpoint: `GET /api/v1/dashboard`**
+- **Endpoint: `GET /api/v1/dashboard/`**
 
     - **Description:** Retrieves a summary of the user's financial data for the dashboard.
     - **Authorization:** Authenticated User
@@ -981,7 +981,7 @@ All API responses will adhere to the following structure:
 
 ### **`/api/v1/reports`**
 
-- **Endpoint: `GET /api/v1/reports`**
+- **Endpoint: `GET /api/v1/reports/`**
 
     - **Description:** Generates a financial report.
     - **Authorization:** Authenticated User

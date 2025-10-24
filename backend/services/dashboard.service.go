@@ -7,29 +7,30 @@ import (
 	"github.com/rahulcodepython/finance-tracker-backend/backend/repository"
 )
 
-func GetDashboardSummary(userID uuid.UUID, db *sql.DB) (map[string]interface{}, error) {
+func GetDashboardSummary(userID uuid.UUID, page int, limit int, description string, categoryID string, accountID string, budgetID string, startDate string, endDate string, db *sql.DB) (map[string]interface{}, error) {
 	// Get total balance
 	totalBalance, err := GetTotalBalance(userID, db)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get monthly income and expenses
-	// This is a simplified example. In a real application, you would have a more complex query to get the data for the current month.
-	aggregateData, err := GetAggregateData(userID, "", "", db)
+	aggregateData, err := GetAggregateData(userID, startDate, endDate, db)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get recent transactions
-	recentTransactions, err := GetTransactions(userID, 1, 10, "", "", "", "", "", "", db)
+	recentTransactions, err := GetTransactions(userID, page, limit, description, categoryID, accountID, budgetID, startDate, endDate, db)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get monthly spending by category
-	// This is a simplified example. In a real application, you would have a more complex query to get this data.
 	spendingByCategory, err := repository.GetSpendingByCategory(userID, db)
+	if err != nil {
+		return nil, err
+	}
+
+	earningByCategory, err := repository.GetEarningByCategory(userID, db)
 	if err != nil {
 		return nil, err
 	}
@@ -44,6 +45,7 @@ func GetDashboardSummary(userID uuid.UUID, db *sql.DB) (map[string]interface{}, 
 		"graphs": map[string]interface{}{
 			"incomeVsExpense":    []map[string]interface{}{},
 			"spendingByCategory": spendingByCategory,
+			"earningByCategory":  earningByCategory,
 		},
 		"recentTransactions": recentTransactions,
 	}, nil

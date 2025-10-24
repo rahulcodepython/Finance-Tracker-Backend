@@ -33,7 +33,7 @@ func Register(name, email, password string, db *sql.DB, cfg *config.Config) (*mo
 	}
 
 	if exists {
-		return nil, "", errors.New("User already exists")
+		return nil, "", errors.New("user already exists")
 	}
 
 	hashedPassword, err := utils.HashPassword(password)
@@ -76,11 +76,11 @@ func Register(name, email, password string, db *sql.DB, cfg *config.Config) (*mo
 func Login(email, password string, db *sql.DB, cfg *config.Config) (*models.User, string, error) {
 	user, err := repository.GetUserByEmail(email, db)
 	if err != nil {
-		return nil, "", errors.New("Invalid email or password")
+		return nil, "", errors.New("invalid email or password")
 	}
 
 	if !utils.CheckPasswordHash(password, user.Password) {
-		return nil, "", errors.New("Invalid email or password")
+		return nil, "", errors.New("invalid email or password")
 	}
 
 	jwtToken, err := repository.GetJwtTokenByUserID(db, user.ID)
@@ -120,11 +120,11 @@ func Login(email, password string, db *sql.DB, cfg *config.Config) (*models.User
 func ChangePassword(userID, currentPassword, newPassword string, db *sql.DB) error {
 	user, err := repository.GetUserByID(userID, db)
 	if err != nil {
-		return errors.New("User not found")
+		return errors.New("user not found")
 	}
 
 	if !utils.CheckPasswordHash(currentPassword, user.Password) {
-		return errors.New("Invalid current password")
+		return errors.New("invalid current password")
 	}
 
 	hashedPassword, err := utils.HashPassword(newPassword)
