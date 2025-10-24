@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -42,7 +43,7 @@ func CreateTransaction(userID uuid.UUID, accountID uuid.UUID, categoryID uuid.UU
 	var budget *models.Budget
 
 	if budgetID.Valid {
-		budget, err := repository.GetBudgetByID(budgetID.UUID, db)
+		budget, err = repository.GetBudgetByID(budgetID.UUID, db)
 		if err != nil {
 			return nil, err
 		}
@@ -87,6 +88,9 @@ func CreateTransaction(userID uuid.UUID, accountID uuid.UUID, categoryID uuid.UU
 	if err != nil {
 		return nil, err
 	}
+
+	// Log the creation
+	go CreateLog(userID, fmt.Sprintf("New transaction '%s' created", transaction.Description), db)
 
 	return transaction, nil
 }
@@ -274,6 +278,9 @@ func UpdateTransaction(id uuid.UUID, accountID uuid.UUID, categoryID uuid.UUID, 
 		return nil, err
 	}
 
+	// Log the update
+	go CreateLog(transaction.UserID, fmt.Sprintf("Transaction '%s' updated", transaction.Description), db)
+
 	return transaction, nil
 
 }
@@ -304,7 +311,7 @@ func DeleteTransaction(id uuid.UUID, db *sql.DB) error {
 	var budget *models.Budget
 
 	if transaction.BudgetID.Valid {
-		budget, err := repository.GetBudgetByID(transaction.BudgetID.UUID, db)
+		budget, err = repository.GetBudgetByID(transaction.BudgetID.UUID, db)
 		if err != nil {
 			return err
 		}
@@ -331,6 +338,9 @@ func DeleteTransaction(id uuid.UUID, db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+
+	// Log the deletion
+	go CreateLog(transaction.UserID, fmt.Sprintf("Transaction '%s' removed", transaction.Description), db)
 
 	return nil
 }

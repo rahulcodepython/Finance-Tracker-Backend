@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,6 +25,9 @@ func CreateAccount(userID uuid.UUID, name string, accountType models.AccountType
 	if err != nil {
 		return nil, err
 	}
+
+	// Log the creation
+	go CreateLog(userID, fmt.Sprintf("New account '%s' created", account.Name), db)
 
 	return account, nil
 }
@@ -68,6 +72,9 @@ func UpdateAccount(id uuid.UUID, name string, accountType models.AccountType, is
 		return nil, err
 	}
 
+	// Log the update
+	go CreateLog(account.UserID, fmt.Sprintf("Account '%s' updated", account.Name), db)
+
 	return account, nil
 }
 
@@ -81,7 +88,15 @@ func DeleteAccount(id uuid.UUID, db *sql.DB) error {
 		return sql.ErrNoRows
 	}
 
-	return repository.DeleteAccount(id, db)
+	err = repository.DeleteAccount(id, db)
+	if err != nil {
+		return err
+	}
+
+	// Log the deletion
+	go CreateLog(account.UserID, fmt.Sprintf("Account '%s' removed", account.Name), db)
+
+	return nil
 }
 
 func GetTotalBalance(userID uuid.UUID, db *sql.DB) (float64, error) {

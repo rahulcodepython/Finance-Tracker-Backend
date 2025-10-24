@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,6 +23,9 @@ func CreateBudget(userID uuid.UUID, name string, amount float64, db *sql.DB) (*m
 	if err != nil {
 		return nil, err
 	}
+
+	// Log the creation
+	go CreateLog(userID, fmt.Sprintf("New budget '%s' created", budget.Name), db)
 
 	return budget, nil
 }
@@ -49,6 +53,9 @@ func UpdateBudget(id uuid.UUID, name string, amount float64, db *sql.DB) (*model
 		return nil, err
 	}
 
+	// Log the update
+	go CreateLog(budget.UserID, fmt.Sprintf("Budget '%s' updated", budget.Name), db)
+
 	return budget, nil
 }
 
@@ -62,7 +69,15 @@ func DeleteBudget(id uuid.UUID, db *sql.DB) error {
 		return sql.ErrNoRows
 	}
 
-	return repository.DeleteBudget(id, db)
+	err = repository.DeleteBudget(id, db)
+	if err != nil {
+		return err
+	}
+
+	// Log the deletion
+	go CreateLog(budget.UserID, fmt.Sprintf("Budget '%s' removed", budget.Name), db)
+
+	return nil
 }
 
 func CheckBudgetExistsById(id uuid.UUID, db *sql.DB) (bool, error) {

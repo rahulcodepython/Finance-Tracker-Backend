@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -63,6 +64,9 @@ func CreateRecurringTransaction(userID uuid.UUID, accountID uuid.UUID, categoryI
 	if err := repository.CreateRecurringTransaction(recurringTransaction, db); err != nil {
 		return nil, err
 	}
+
+	// Log the creation
+	go CreateLog(userID, fmt.Sprintf("New recurring transaction '%s' created", recurringTransaction.Description), db)
 
 	return recurringTransaction, nil
 }
@@ -127,6 +131,9 @@ func UpdateRecurringTransaction(id uuid.UUID, accountID uuid.UUID, categoryID uu
 		return nil, err
 	}
 
+	// Log the update
+	go CreateLog(recurringTransaction.UserID, fmt.Sprintf("Recurring transaction '%s' updated", recurringTransaction.Description), db)
+
 	return recurringTransaction, nil
 }
 
@@ -140,5 +147,13 @@ func DeleteRecurringTransaction(id uuid.UUID, db *sql.DB) error {
 		return sql.ErrNoRows
 	}
 
-	return repository.DeleteRecurringTransaction(id, db)
+	err = repository.DeleteRecurringTransaction(id, db)
+	if err != nil {
+		return err
+	}
+
+	// Log the deletion
+	go CreateLog(recurringTransaction.UserID, fmt.Sprintf("Recurring transaction '%s' removed", recurringTransaction.Description), db)
+
+	return nil
 }

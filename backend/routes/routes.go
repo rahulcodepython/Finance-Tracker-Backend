@@ -79,4 +79,7 @@ func Setup(app *fiber.App) {
 	recurringTransactions.Get("/", v1.GetRecurringTransactions)
 	recurringTransactions.Patch("/update/:id", v1.UpdateRecurringTransaction)
 	recurringTransactions.Delete("/delete/:id", v1.DeleteRecurringTransaction)
+
+	logs := v1Api.Group("/logs", middleware.DeserializeUser)
+	logs.Get("/", v1.GetLogs)
 }

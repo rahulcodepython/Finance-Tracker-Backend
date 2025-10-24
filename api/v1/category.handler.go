@@ -30,9 +30,14 @@ func CreateCategory(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
 	}
 
+	userID, err := uuid.Parse(c.Locals("user_id").(string))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+	}
+
 	db := database.DB
 
-	category, err := services.CreateCategory(input.Name, models.TransactionType(input.Type), db)
+	category, err := services.CreateCategory(input.Name, models.TransactionType(input.Type), userID, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to create category", "error": err.Error()})
 	}
@@ -81,6 +86,11 @@ func UpdateCategory(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request", "error": err.Error()})
 	}
 
+	userID, err := uuid.Parse(c.Locals("user_id").(string))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+	}
+
 	categoryID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
@@ -88,7 +98,7 @@ func UpdateCategory(c *fiber.Ctx) error {
 
 	db := database.DB
 
-	category, err := services.UpdateCategory(categoryID, input.Name, models.TransactionType(input.Type), db)
+	category, err := services.UpdateCategory(categoryID, input.Name, models.TransactionType(input.Type), userID, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to update category", "error": err.Error()})
 	}
@@ -111,9 +121,14 @@ func DeleteCategory(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid category ID", "error": err.Error()})
 	}
 
+	userID, err := uuid.Parse(c.Locals("user_id").(string))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid user ID", "error": err.Error()})
+	}
+
 	db := database.DB
 
-	if err := services.DeleteCategory(categoryID, db); err != nil {
+	if err := services.DeleteCategory(categoryID, userID, db); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "Failed to delete category", "error": err.Error()})
 	}
 

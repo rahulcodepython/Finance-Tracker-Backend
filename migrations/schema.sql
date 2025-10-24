@@ -81,3 +81,10 @@ CREATE TABLE IF NOT EXISTS jwt_tokens (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (user_id)
 );
+
+CREATE TABLE IF NOT EXISTS logs (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    message TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

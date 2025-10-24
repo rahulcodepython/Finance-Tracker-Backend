@@ -55,6 +55,9 @@ func Register(name, email, password string, db *sql.DB, cfg *config.Config) (*mo
 		return nil, "", err
 	}
 
+	// Log the registration
+	go CreateLog(user.ID, "User registered", db)
+
 	token, expiresAt, err := utils.GenerateToken(user.ID.String(), cfg)
 	if err != nil {
 		return nil, "", err
@@ -70,6 +73,9 @@ func Register(name, email, password string, db *sql.DB, cfg *config.Config) (*mo
 
 	repository.CreateJwtToken(db, &jwtToken)
 
+	// Log the registration
+	go CreateLog(user.ID, "JWT token created", db)
+
 	return user, token, nil
 }
 
@@ -82,6 +88,9 @@ func Login(email, password string, db *sql.DB, cfg *config.Config) (*models.User
 	if !utils.CheckPasswordHash(password, user.Password) {
 		return nil, "", errors.New("invalid email or password")
 	}
+
+	// Log the login
+	go CreateLog(user.ID, "User logged in", db)
 
 	jwtToken, err := repository.GetJwtTokenByUserID(db, user.ID)
 	if err != nil {
@@ -97,6 +106,9 @@ func Login(email, password string, db *sql.DB, cfg *config.Config) (*models.User
 		if err != nil {
 			return nil, "", err
 		}
+
+		// Log the deletion
+		go CreateLog(user.ID, "JWT token deleted", db)
 	}
 
 	token, expiresAt, err := utils.GenerateToken(user.ID.String(), cfg)
@@ -113,6 +125,9 @@ func Login(email, password string, db *sql.DB, cfg *config.Config) (*models.User
 	}
 
 	repository.CreateJwtToken(db, &newJwtToken)
+
+	// Log the registration
+	go CreateLog(user.ID, "JWT token created", db)
 
 	return user, token, nil
 }
@@ -134,7 +149,15 @@ func ChangePassword(userID, currentPassword, newPassword string, db *sql.DB) err
 
 	user.Password = hashedPassword
 
-	return repository.UpdateUser(user, db)
+	err = repository.UpdateUser(user, db)
+	if err != nil {
+		return err
+	}
+
+	// Log the password change
+	go CreateLog(user.ID, "User changed password", db)
+
+	return nil
 }
 
 func GetProfile(userID string, db *sql.DB) (*models.User, error) {
@@ -156,6 +179,30 @@ func GoogleLogin(email, fullName string, db *sql.DB, cfg *config.Config) (*model
 		if err := repository.CreateUser(user, db); err != nil {
 			return nil, "", err
 		}
+		// Log the registration
+		go CreateLog(user.ID, "User registered with Google", db)
+	}
+
+	// Log the login
+	go CreateLog(user.ID, "User logged in with Google", db)
+
+	jwtToken, err := repository.GetJwtTokenByUserID(db, user.ID)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if jwtToken != nil && jwtToken.ExpiresAt.After(time.Now().In(utils.LOC)) {
+		return user, jwtToken.Token, nil
+	}
+
+	if jwtToken != nil && jwtToken.ExpiresAt.Before(time.Now().In(utils.LOC)) {
+		err := repository.DeleteJwtTokenByUserID(db, user.ID)
+		if err != nil {
+			return nil, "", err
+		}
+
+		// Log the deletion
+		go CreateLog(user.ID, "JWT token deleted", db)
 	}
 
 	token, expiresAt, err := utils.GenerateToken(user.ID.String(), cfg)
@@ -163,9 +210,18 @@ func GoogleLogin(email, fullName string, db *sql.DB, cfg *config.Config) (*model
 		return nil, "", err
 	}
 
-	//  create the token
-	x := expiresAt
-	_ = x
+	newJwtToken := models.JwtToken{
+		ID:        uuid.New(),
+		UserID:    user.ID,
+		Token:     token,
+		ExpiresAt: expiresAt,
+		CreatedAt: time.Now().In(utils.LOC),
+	}
+
+	repository.CreateJwtToken(db, &newJwtToken)
+
+	// Log the registration
+	go CreateLog(user.ID, "JWT token created", db)
 
 	return user, token, nil
 }
