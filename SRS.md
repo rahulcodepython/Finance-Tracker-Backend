@@ -4,6 +4,8 @@ Version: 1.0
 
 Date: October 5, 2025
 
+Modified: October 25, 2025
+
 Status: Draft
 
 ---
@@ -40,6 +42,7 @@ The primary purpose of this project is to provide users with a robust and secure
     
 - Generate a details README.md file containing all essential description, features, API endpoints, and other information about the project.
 	
+- Maintaining detailed logs for future reference.
 
 **Out-of-Scope:**
 
@@ -54,26 +57,11 @@ The primary purpose of this project is to provide users with a robust and secure
 - CSV data import functionality (marked as a future feature).
     
 
-### 1.4. Target Audience
-
-This document is intended for the following stakeholders:
-
-- **Backend Developers:** To understand the system architecture, functional requirements, and API specifications for implementation.
-    
-- **Frontend Developers:** To understand the API contract, data models, and authentication flow for integrating the client application.
-    
-- **QA Engineers:** To create test plans and test cases based on the defined requirements.
-    
-- **Project Managers:** To oversee the project scope, features, and development timeline.
-    
-
 ## 2. Overall Description
 
 ### 2.1. User Personas & Roles
 
-- **Standard User:** The primary user of the application. This user can register, log in, manage their own profile, accounts, transactions, budgets, and view their financial data through dashboards and reports. All data is scoped to their own profile.
-    
-- **Administrator (System-level):** A potential future role responsible for system maintenance, monitoring application health, and managing system-wide settings. This role does not have access to individual user's financial data but can perform administrative tasks. For the current scope, all API endpoints are designed for the 'Standard User'.
+- **Standard User:** The primary user of the application. This user can register, log in, manage their own profile, accounts, transactions, budgets, logs, and view their financial data through dashboards and reports. All data is scoped to their own profile.
     
 
 ### 2.2. Use Case Diagram
@@ -136,64 +124,84 @@ graph TD
 
 A logical and scalable folder structure for the Golang backend service:
 
-Plaintext
-
-```
+```markdown
 /finance-tracker-api
-├── /api
-│   └── /v1              # API versioning, contains handlers/controllers
-│       ├── auth.handler.go
+├── .dockerignore
+├── .env.example
+├── .gitignore
+├── docker-compose.yml
+├── Dockerfile
+├── go.mod
+├── go.sum
+├── main.go
+├── README.md
+├── SRS.md
+├── .git/
+├── api/
+│   └── v1/
 │       ├── account.handler.go
-│       ├── transaction.handler.go
-│       ├── dashboard.handler.go
+│       ├── auth.handler.go
 │       ├── budget.handler.go
 │       ├── category.handler.go
-│       ├── recurring_transaction.handler.go
-│       └── report.handler.go
-├── /backend
-│       ├── /config              # Configuration management
-│       │   └── config.go
-│       ├── /database        # DB connection, setup, migrations, ping
-│       │   └── database.go
-│       ├── /middleware      # Custom Fiber middleware (auth, logging)
-│       │   └── auth.go
-│       ├── /models          # Structs for DB entities and API requests/responses
-│       │   ├── account.go
-│       │   ├── budget.go
-│       │   ├── category.go
-│       │   ├── recurring_transaction.go
-│       │   ├── transaction.go
-│       │   └── user.go
-│       ├── /repository      # Data Access Layer (interacts with the DB)
-│       │   ├── account.repository.go
-│       │   ├── category.repository.go
-│       │   ├── transaction.repository.go
-│       │   └── user.repository.go
-│       ├── /routes          # API route definitions
-│       │   └── routes.go
-│       ├── /services        # Business logic layer
-│       │   ├── account.service.go
-│       │   ├── budget.service.go
-│       │   ├── category.service.go
-│       │   ├── dashboard.service.go
-│       │   ├── recurring_transaction.service.go
-│       │   ├── report.service.go
-│       │   ├── transaction.service.go
-│       │   └── user.service.go
-│       ├── /utils           # Helpers (password, token, validation)
-│       │   ├── password.go
-│       │   ├── ping.go
-│       │   ├── response.go
-│       │   └── token.go
-│       └── /pkg
-│           └── /scheduler       # Background jobs (recurring transactions)
-│               └── scheduler.go
-├── main.go              # Main application entry point
-├── .env.example         # Environment variable template
-├── Dockerfile           # Docker build instructions
-├── docker-compose.yml   # For local development environment
-├── go.mod
-└── go.sum
+│       ├── dashboard.handler.go
+│       ├── log.handler.go
+│       ├── recurring.transaction.handler.go
+│       ├── report.handler.go
+│       └── transaction.handler.go
+├── backend/
+│   ├── config/
+│   │   └── config.go
+│   ├── database/
+│   │   ├── database.go
+│   │   └── migrations.go
+│   ├── interfaces/
+│   │   └── sql.interfaces.go
+│   ├── middleware/
+│   │   ├── auth.go
+│   │   └── logger.go
+│   ├── models/
+│   │   ├── account.go
+│   │   ├── budget.go
+│   │   ├── category.go
+│   │   ├── jwt.token.go
+│   │   ├── log.go
+│   │   ├── recurring.transaction.go
+│   │   ├── transaction.go
+│   │   └── user.go
+│   ├── pkg/
+│   │   └── scheduler/
+│   │       └── scheduler.go
+│   ├── repository/
+│   │   ├── account.repository.go
+│   │   ├── budget.repository.go
+│   │   ├── category.repository.go
+│   │   ├── jwt.token.repository.go
+│   │   ├── log.repository.go
+│   │   ├── recurring.transaction.repository.go
+│   │   ├── transaction.repository.go
+│   │   └── user.repository.go
+│   ├── routes/
+│   │   └── routes.go
+│   ├── services/
+│   │   ├── account.service.go
+│   │   ├── budget.service.go
+│   │   ├── category.service.go
+│   │   ├── dashboard.service.go
+│   │   ├── log.service.go
+│   │   ├── recurring.transaction.service.go
+│   │   ├── report.service.go
+│   │   ├── transaction.service.go
+│   │   └── user.service.go
+│   └── utils/
+│       ├── db.transaction.go
+│       ├── password.go
+│       ├── ping.go
+│       ├── response.go
+│       ├── time.go
+│       └── token.go
+└── migrations/
+    ├── drop.sql
+    └── schema.sql
 ```
 
 ### 3.3. Data Flow Diagram (DFD)
@@ -226,340 +234,331 @@ graph TD
     
 - **Schema Design:** The following tables define the structure for storing user and financial data. The provided SQL script will be used as the basis for database migrations.
     
-    ### 🧩 ENUM Types
+## Enumerated Types
 
-#### `account_type`
+| Type Name | Values | Description |
+|-----------|--------|-------------|
+| `account_type` | `checking`, `savings`, `credit_card`, `cash`, `investment`, `loan`, `upi` | Types of financial accounts |
+| `transaction_type` | `income`, `expense` | Types of financial transactions |
+| `auth_provider` | `email`, `google` | User authentication methods |
+| `recurring_frequency` | `monthly`, `yearly` | Frequencies for recurring transactions |
 
-|Value|
-|---|
-|checking|
-|savings|
-|credit_card|
-|cash|
-|investment|
-|loan|
-|upi|
+## Tables
 
-#### `transaction_type`
+### Users Table
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique user identifier |
+| `name` | VARCHAR(100) | NOT NULL | User's full name |
+| `email` | VARCHAR(255) | UNIQUE, NOT NULL | User's email address |
+| `password` | VARCHAR(255) | NULL | Hashed password (nullable for OAuth) |
+| `provider` | auth_provider | NOT NULL, DEFAULT 'email' | Authentication provider |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Account creation timestamp |
 
-|Value|
-|---|
-|income|
-|expense|
+### Accounts Table
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique account identifier |
+| `user_id` | UUID | NOT NULL, REFERENCES users(id) ON DELETE CASCADE | Associated user |
+| `name` | VARCHAR(100) | NOT NULL | Account name |
+| `type` | account_type | NOT NULL | Type of account |
+| `balance` | NUMERIC(19,4) | NOT NULL, DEFAULT 0.00 | Current account balance |
+| `is_active` | BOOLEAN | NOT NULL, DEFAULT TRUE | Account status |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Account creation timestamp |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Last update timestamp |
 
-#### `auth_provider`
+### Categories Table
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique category identifier |
+| `name` | VARCHAR(100) | NOT NULL | Category name |
+| `type` | transaction_type | NOT NULL | Transaction type for this category |
+| - | - | UNIQUE (name, type) | Ensures unique category per transaction type |
 
-|Value|
-|---|
-|email|
-|google|
+### Transactions Table
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique transaction identifier |
+| `user_id` | UUID | NOT NULL, REFERENCES users(id) ON DELETE CASCADE | Associated user |
+| `account_id` | UUID | NOT NULL, REFERENCES accounts(id) ON DELETE CASCADE | Source/destination account |
+| `category_id` | UUID | REFERENCES categories(id) ON DELETE RESTRICT | Transaction category |
+| `budget_id` | UUID | REFERENCES budgets(id) ON DELETE SET NULL | Associated budget |
+| `description` | VARCHAR(255) | NOT NULL | Transaction description |
+| `amount` | NUMERIC(19,4) | NOT NULL | Transaction amount |
+| `type` | transaction_type | NOT NULL | Income or expense |
+| `transaction_date` | DATE | NOT NULL | Date of transaction |
+| `note` | TEXT | - | Additional notes |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Creation timestamp |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Last update timestamp |
 
-#### `recurring_frequency`
+### Recurring Transactions Table
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique recurring transaction identifier |
+| `user_id` | UUID | NOT NULL, REFERENCES users(id) ON DELETE CASCADE | Associated user |
+| `account_id` | UUID | NOT NULL, REFERENCES accounts(id) ON DELETE CASCADE | Source/destination account |
+| `category_id` | UUID | REFERENCES categories(id) ON DELETE RESTRICT | Transaction category |
+| `budget_id` | UUID | REFERENCES budgets(id) ON DELETE SET NULL | Associated budget |
+| `description` | VARCHAR(255) | NOT NULL | Transaction description |
+| `amount` | NUMERIC(19,4) | NOT NULL | Transaction amount |
+| `type` | transaction_type | NOT NULL | Income or expense |
+| `note` | TEXT | - | Additional notes |
+| `recurring_frequency` | recurring_frequency | NOT NULL | Monthly or yearly recurrence |
+| `recurring_date` | INTEGER | NOT NULL | Day of month for recurring transactions |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Creation timestamp |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Last update timestamp |
 
-|Value|
-|---|
-|monthly|
-|yearly|
+### Budgets Table
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique budget identifier |
+| `user_id` | UUID | NOT NULL, REFERENCES users(id) ON DELETE CASCADE | Associated user |
+| `name` | VARCHAR(100) | NOT NULL | Budget name |
+| `amount` | NUMERIC(19,4) | NOT NULL | Budget amount |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Creation timestamp |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Last update timestamp |
 
----
-### 👤 `users` Table
+### JWT Tokens Table
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique token identifier |
+| `user_id` | UUID | NOT NULL, REFERENCES users(id) ON DELETE CASCADE | Associated user |
+| `token` | TEXT | UNIQUE, NOT NULL | JWT token string |
+| `expires_at` | TIMESTAMPTZ | NOT NULL | Token expiration timestamp |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Creation timestamp |
+| - | - | UNIQUE (user_id) | One active token per user |
 
-|Column|Type|Constraints / Default|
-|---|---|---|
-|id|UUID|Primary Key, Default: `gen_random_uuid()`|
-|name|VARCHAR(100)|Not Null|
-|email|VARCHAR(255)|Unique, Not Null|
-|password|VARCHAR(255)|Nullable|
-|provider|auth_provider|Not Null, Default: `'email'`|
-|created_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
+### Logs Table
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Log entry identifier |
+| `user_id` | UUID | NOT NULL, REFERENCES users(id) ON DELETE CASCADE | Associated user |
+| `message` | TEXT | NOT NULL | Log message content |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Log creation timestamp |
 
----
+## Indexes
 
-### 🏦 `accounts` Table
+| Index Name | Table | Columns | Description |
+|------------|-------|---------|-------------|
+| `idx_transactions_user_id_date` | transactions | (user_id, transaction_date DESC) | Optimizes user transaction queries by date |
+| `idx_accounts_user_id` | accounts | (user_id) | Optimizes user account lookups |
 
-|Column|Type|Constraints / Default|
-|---|---|---|
-|id|UUID|Primary Key, Default: `gen_random_uuid()`|
-|user_id|UUID|Foreign Key → `users(id)`, On Delete CASCADE|
-|name|VARCHAR(100)|Not Null|
-|type|account_type|Not Null|
-|balance|NUMERIC(19,4)|Not Null, Default: `0.00`|
-|is_active|BOOLEAN|Not Null, Default: `TRUE`|
-|created_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
-|updated_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
+## Key Relationships
 
----
+- **Users → Accounts**: One-to-Many (CASCADE delete)
+- **Users → Transactions**: One-to-Many (CASCADE delete)  
+- **Users → Budgets**: One-to-Many (CASCADE delete)
+- **Accounts → Transactions**: One-to-Many (CASCADE delete)
+- **Categories → Transactions**: One-to-Many (RESTRICT delete)
+- **Budgets → Transactions**: One-to-Many (SET NULL delete)
+- **Users → JWT Tokens**: One-to-One (CASCADE delete)
 
-### 🗂️ `categories` Table
 
-|Column|Type|Constraints / Default|
-|---|---|---|
-|id|UUID|Primary Key, Default: `gen_random_uuid()`|
-|name|VARCHAR(100)|Not Null|
-|type|transaction_type|Not Null|
+## Functional Requirements
 
-> 🔒 Unique Constraint: `(name, type)` ensures category names are unique per transaction type.
+### 1. Authentication & Authorization Module
+#### User Management
+- **User Registration** with email/password or OAuth (Google)
+- **User Login/Logout** with JWT token management
+- **Password Management** - secure hashing, reset functionality
+- **Session Management** - token expiration and refresh
+- **Profile Management** - update user information
 
----
+#### Security Features
+- **Authentication Middleware** - protect routes and validate tokens
+- **Provider-based Auth** - support multiple authentication methods
 
-### 💸 `transactions` Table
+### 2. Account Management Module
+#### Core Account Operations
+- **Create/Update/Delete** financial accounts
+- **Account Type Support** - checking, savings, credit cards, cash, investments, loans, UPI
+- **Balance Management** - track current balances with precision (4 decimal places)
+- **Account Status** - activate/deactivate accounts
+- **Account Categorization** - organize by type and status
 
-|Column|Type|Constraints / Default|
-|---|---|---|
-|id|UUID|Primary Key, Default: `gen_random_uuid()`|
-|user_id|UUID|Foreign Key → `users(id)`, On Delete CASCADE|
-|account_id|UUID|Foreign Key → `accounts(id)`, On Delete CASCADE|
-|category_id|UUID|Foreign Key → `categories(id)`, On Delete RESTRICT, Nullable|
-|budget_id|UUID|Foreign Key → `budgets(id)`, On Delete SET NULL, Nullable|
-|description|VARCHAR(255)|Not Null|
-|amount|NUMERIC(19,4)|Not Null|
-|type|transaction_type|Not Null|
-|transaction_date|DATE|Not Null|
-|note|TEXT|Optional|
-|created_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
-|updated_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
+### 3. Transaction Management Module
+#### Basic Transaction Operations
+- **Record Transactions** - income and expense tracking
+- **Transaction Categorization** - assign to predefined categories
+- **Transaction Editing** - modify existing transactions
+- **Transaction Deletion** - with proper constraints
 
----
+#### Advanced Features
+- **Transaction Search** - filter by date, category, amount, description
 
-### 🔁 `recurring_transactions` Table
+### 4. Category Management Module
+- **Category CRUD** - create, read, update, delete categories
+- **Type-based Categories** - separate categories for income and expense
+- **Category Validation** - ensure unique category names per type
+- **Default Categories** - pre-defined common categories
 
-|Column|Type|Constraints / Default|
-|---|---|---|
-|id|UUID|Primary Key, Default: `gen_random_uuid()`|
-|user_id|UUID|Foreign Key → `users(id)`, On Delete CASCADE|
-|account_id|UUID|Foreign Key → `accounts(id)`, On Delete CASCADE|
-|category_id|UUID|Foreign Key → `categories(id)`, On Delete RESTRICT|
-|description|VARCHAR(255)|Not Null|
-|amount|NUMERIC(19,4)|Not Null|
-|type|transaction_type|Not Null|
-|recurring_frequency|recurring_frequency|Not Null|
-|recurring_date|INTEGER|Not Null|
-|created_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
-|updated_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
+### 5. Budget Management Module
+#### Budget Planning
+- **Budget Creation** - set spending limits by period
+- **Budget Tracking** - monitor actual vs planned spending
+- **Budget Categories** - associate transactions with budgets
+- **Budget Alerts** - notifications when approaching limits
 
----
+#### Advanced Features
+- **Rollover Budgets** - handle unused amounts
+- **Multiple Budget Periods** - weekly, monthly, yearly
+- **Budget Templates** - reusable budget structures
 
-### 💰 `budgets` Table
+### 6. Recurring Transactions Module
+#### Automated Transactions
+- **Recurring Setup** - configure automatic transaction generation
+- **Frequency Support** - monthly and yearly recurrences
+- **Date Management** - specific day of month for processing
+- **Recurring Template Management** - create and modify templates
 
-|Column|Type|Constraints / Default|
-|---|---|---|
-|id|UUID|Primary Key, Default: `gen_random_uuid()`|
-|user_id|UUID|Foreign Key → `users(id)`, On Delete CASCADE|
-|name|VARCHAR(100)|Not Null|
-|amount|NUMERIC(19,4)|Not Null|
-|created_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
-|updated_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
+#### Advanced Features
+- **Recurring Pattern Validation** - ensure valid recurrence rules
+- **Auto-generation** - system-generated transactions
+- **Recurring Budget Alignment** - integrate with budget planning
 
----
+### 7. Reporting & Analytics Module
+#### Financial Reports
+- **Income Statement** - revenue vs expenses over time
+- **Spending Analysis** - category-wise expenditure
+- **Account Balances** - net worth tracking
+- **Budget vs Actual** - performance reporting
 
-### ⚡ Indexes
+#### Advanced Analytics
+- **Trend Analysis** - spending patterns over time
+- **Forecasting** - future financial projections
+- **Custom Reports** - user-defined report generation
+- **Data Visualization** - charts and graphs
 
-| Index Name | Columns |
-| --- | --- |
-| idx_transactions_user_id_date | `(user_id, transaction_date DESC)` |
-| idx_accounts_user_id | `(user_id)` |
+### 8. Dashboard Module
+#### Overview Features
+- **Financial Snapshot** - current balances and recent activity
+- **Quick Actions** - fast access to common operations
+- **Alert Summary** - important notifications and warnings
+- **Performance Metrics** - key financial indicators
 
----
+### 9. Logging & Audit Module
+- **Activity Logging** - track user actions and system events
+- **Audit Trail** - compliance and debugging support
+- **Error Tracking** - system error monitoring
+- **Performance Logging** - response time and resource usage
 
-### 🔐 `jwt_tokens` Table
+## Advanced System Features
 
-|Column|Type|Constraints / Default|
-|---|---|---|
-|id|UUID|Primary Key, Default: `gen_random_uuid()`|
-|user_id|UUID|Foreign Key → `users(id)`, On Delete CASCADE, Unique|
-|token|TEXT|Unique, Not Null|
-|expires_at|TIMESTAMPTZ|Not Null|
-|created_at|TIMESTAMPTZ|Not Null, Default: `NOW()`|
+### 1. Data Management
+- **Database Transactions** - ensure data consistency
+- **Data Validation** - input sanitization and business rule enforcement
 
----
+### 2. System Integration
+- **RESTful API** - standardized API responses and error handling
+- **Export Capabilities** - CSV, formats
 
-## 4. Functional Requirements
+## Non-Functional Requirements
 
-#### Module 1: User Authentication & Profile
+### 1. Performance
+- **Response Time**: API responses under 200ms for 95% of requests
+- **Transaction Processing**: Handle 1000+ concurrent transactions
+- **Database Queries**: Optimized queries with proper indexing
+- **Throughput**: Support 10,000+ daily active users
 
-- **FR-01: User Registration:** The system shall allow a new user to register using their Full Name, Email, and a secure Password.
-    
-- **FR-02: User Login:** The system shall allow a registered user to log in using their Email and Password.
-    
-- **FR-03: Google OAuth Integration:** The system shall allow users to sign up or sign in using their Google account.
-    
-- **FR-04: JWT Generation:** Upon successful authentication, the system shall generate and return a secure JSON Web Token (JWT) to the user.
-    
-- **FR-05: Route Protection:** The system shall protect sensitive API endpoints, allowing access only to requests with a valid JWT.
-    
-- **FR-06: View Profile:** The system shall allow an authenticated user to view their profile information (Full Name, Email).
-    
-- **FR-07: Update Profile:** The system shall allow an authenticated user to update their Full Name.
-    
-- **FR-08: Change Password:** The system shall provide a secure endpoint for an authenticated user to change their password.
-    
-- **FR-09: Fetch User Statistics:** The system shall provide an endpoint to return user statistics, including total number of accounts, total transactions, and days since registration.
-    
+### 2. Scalability
+- **Horizontal Scaling**: Stateless architecture supporting multiple instances
+- **Database Scaling**: Read replicas for reporting and analytics
+- **Load Balancing**: Efficient request distribution
+- **Resource Management**: Auto-scaling based on load patterns
 
-#### Module 2: Account Management
+### 3. Security
+- **Data Encryption**: AES-256 for sensitive data at rest
+- **TLS/SSL**: HTTPS for all communications
+- **Authentication**: JWT with short expiration and secure refresh
+- **Authorization**: Role-based access control (RBAC)
+- **Input Validation**: SQL injection and XSS protection
+- **API Security**: Rate limiting and DDoS protection
 
-- **FR-10: Create Account:** The system shall allow an authenticated user to create a new financial account (e.g., Savings, Checking) by providing a name and type.
-    
-- **FR-11: Read Accounts:** The system shall allow a user to retrieve a list of all their financial accounts, including their current balance, type, and status.
-    
-- **FR-12: Update Account:** The system shall allow a user to update the details of an existing account (name, type, status).
-    
-- **FR-13: Delete Account:** The system shall allow a user to delete an account. Deletion should be blocked if the account has associated transactions.
-    
-- **FR-14: Calculate Total Balance:** The system shall provide an endpoint to calculate and return the sum of balances from all the user's active accounts.
-    
+### 4. Reliability
+- **Uptime**: 99.9% availability SLA
+- **Data Consistency**: ACID compliance for financial transactions
+- **Error Handling**: Graceful degradation and informative error messages
+- **Backup Strategy**: Automated daily backups with point-in-time recovery
+- **Disaster Recovery**: Multi-region deployment capability
 
-#### Module 3: Transaction Management
+### 5. Usability
+- **Response Consistency**: Standardized API response format
+- **Error Messages**: User-friendly, actionable error information
+- **API Documentation**: Comprehensive OpenAPI/Swagger documentation
+- **Mobile Responsive**: Responsive design for various devices
+- **Accessibility**: WCAG 2.1 compliance for web interfaces
 
-- **FR-15: Create Transaction:** The system shall allow a user to add a new transaction (income or expense), linking it to a specific account and category.
-    
-- **FR-16: Read Transactions:** The system shall allow a user to retrieve a list of all their transactions.
-    
-- **FR-17: Paginate Transactions:** The transaction list endpoint must support server-side pagination (e.g., page number, page size).
-    
-- **FR-18: Filter/Search Transactions:** The transaction list endpoint must allow filtering by description, category, account, and date range.
-    
-- **FR-19: Update Transaction:** The system shall allow a user to update the details of an existing transaction.
-    
-- **FR-20: Delete Transaction:** The system shall allow a user to delete a transaction. This action must also update the corresponding account balance.
-    
-- **FR-21: View Aggregate Data:** The system shall provide endpoints to view total income, total expenses, and net income over a specified period.
-    
+### 6. Maintainability
+- **Code Quality**: Comprehensive test coverage (unit, integration, e2e)
+- **Documentation**: API docs, architecture decisions, deployment guides
+- **Monitoring**: Application performance monitoring (APM)
+- **Logging**: Structured logging with correlation IDs
+- **CI/CD**: Automated testing and deployment pipelines
 
-#### Module 4 & 5: Dashboard & Reporting
+### 9. Data Integrity
+- **Referential Integrity**: Database constraints and cascading rules
+- **Audit Trail**: Immutable transaction history
+- **Data Validation**: Business rule enforcement at multiple layers
+- **Consistency Checks**: Regular data integrity verification
 
-- **FR-22: Dashboard Summary:** The system shall provide a single endpoint to fetch consolidated data for a dashboard view, including total balance, current month's income/expenses/savings.
-    
-- **FR-23: Recent Transactions:** The system shall provide an endpoint to fetch the 10 most recent transactions for the user.
-    
-- **FR-24: Historical Comparison Data:** The system shall provide data formatted for an "Income vs. Expenses" graph for the last 12 months.
-    
-- **FR-25: Categorical Spending Data:** The system shall provide data formatted for a "Monthly Spending by Category" pie chart for the current month.
-    
-- **FR-26: Custom Date-Range Reports:** The system shall provide a powerful reporting endpoint that accepts a start and end date to generate detailed financial summaries.
-    
-- **FR-27: Trend Analysis Data:** The reporting endpoint shall return data suitable for visualizing income/expense trends over the selected period.
-    
-
-#### Module 6, 7, 8, 9: Advanced Features
-
-- **FR-28: Manage Budgets:** The system shall provide full CRUD functionality for users to set monthly budgets for specific expense categories.
-    
-- **FR-29: Manage Custom Categories:** The system shall provide full CRUD functionality for users to create, update, and delete their own custom transaction categories.
-    
-- **FR-30: Default Categories:** Upon registration, the system shall populate a user's account with a predefined set of default income and expense categories.
-    
-- **FR-31: Manage Recurring Transactions:** The system shall allow users to set up, view, update, and delete recurring transactions with a defined frequency.
-    
-- **FR-32: Process Recurring Transactions:** A background worker shall automatically create new transactions when a recurring transaction is due.
-    
-- **FR-33: Export Data:** The system shall allow users to export their transaction data within a specified date range to a CSV file.
-    
-
-## 5. Non-Functional Requirements
-
-### 5.1. Performance
-
-- **NFR-01 (Response Time):** 95% of all API requests must be processed and responded to in under 250ms.
-    
-- **NFR-02 (Complex Queries):** Reporting and dashboard endpoints with complex aggregations must respond in under 800ms.
-    
-- **NFR-03 (Database Performance):** Proper indexing must be applied to all frequently queried columns (e.g., foreign keys, dates) to ensure fast query execution.
-    
-
-### 5.2. Scalability
-
-- **NFR-04 (Concurrent Users):** The system architecture must be designed to support at least 1,000 concurrent users during its initial launch phase, with the ability to scale horizontally.
-    
-- **NFR-05 (Statelessness):** The API must be stateless, allowing for easy horizontal scaling by adding more container instances behind a load balancer.
-    
-
-### 5.3. Security
-
-- **NFR-06 (Data Encryption):** All data in transit must be encrypted using TLS 1.2 or higher.
-    
-- **NFR-07 (Password Security):** User passwords must be hashed using a strong, adaptive algorithm like `bcrypt`. Passwords must never be stored in plaintext.
-    
-- **NFR-08 (Authentication):** All endpoints, except for registration and login, must be protected and require a valid JWT.
-    
-- **NFR-09 (SQL Injection):** All database queries must be executed using parameterized statements or an ORM that provides this protection by default to prevent SQL injection attacks.
-    
-- **NFR-10 (XSS Protection):** The API must handle user-generated content by properly sanitizing or encoding output to prevent Cross-Site Scripting (XSS) vulnerabilities on the client side.
-    
-- **NFR-11 (CORS Policy):** A strict Cross-Origin Resource Sharing (CORS) policy must be implemented to allow requests only from the authorized frontend domain.
-    
-- **NFR-12 (Rate Limiting):** Sensitive endpoints (e.g., login, password reset requests) must be protected by variable rate limiting to mitigate brute-force attacks.
-    
-
-### 5.4. Reliability
-
-- **NFR-13 (Uptime):** The system must achieve a minimum of 99.9% uptime, excluding planned maintenance windows.
-    
-- **NFR-14 (Data Integrity):** The system must use database transactions for operations that involve multiple writes (e.g., creating a transaction and updating an account balance) to ensure atomicity and data integrity.
-    
-- **NFR-15 (Logging):** The application must generate structured logs for key events, errors, and access patterns to facilitate monitoring and debugging.
-    
-
-### 5.5. Usability
-
-- **NFR-16 (API Documentation):** A clear and comprehensive API documentation (e.g., using OpenAPI/Swagger) must be maintained.
-    
-- **NFR-17 (Error Handling):** The API must provide consistent and meaningful error messages and HTTP status codes to aid frontend development and debugging.
-    
+Based on the API structure and route grouping information provided, here's the updated API endpoints documentation:
 
 ## 6. API Endpoints
 
 ### Base Route
-- `GET /api/v1/`
+- `GET /api/v1/` - **Public** - API welcome and health check
 
-### Auth Routes
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
-- `GET /api/v1/auth/profile`
-- `POST /api/v1/auth/change-password`
-- `GET /api/v1/auth/google/login`
-- `GET /api/v1/auth/google/callback`
+### Authentication Module
+- `POST /api/v1/auth/register` - **Public** - User registration
+- `POST /api/v1/auth/login` - **Public** - User login
+- `GET /api/v1/auth/profile` - **Authenticated** - Get user profile (Own data only)
+- `POST /api/v1/auth/change-password` - **Authenticated** - Change password (Own data only)
+- `GET /api/v1/auth/google/login` - **Public** - Initiate Google OAuth flow
+- `GET /api/v1/auth/google/callback` - **Public** - Google OAuth callback
 
-### Accounts Routes
-- `POST /api/v1/accounts/create`
-- `GET /api/v1/accounts/`
-- `PATCH /api/v1/accounts/update/:id`
-- `DELETE /api/v1/accounts/delete/:id`
-- `GET /api/v1/accounts/total-balance`
+### Account Management Module
+- `POST /api/v1/accounts/create` - **Authenticated** - Create financial account (User-owned accounts)
+- `GET /api/v1/accounts/` - **Authenticated** - Get all user accounts (User-owned accounts)
+- `PATCH /api/v1/accounts/update/:id` - **Authenticated** - Update account (User-owned accounts)
+- `DELETE /api/v1/accounts/delete/:id` - **Authenticated** - Delete account (User-owned accounts)
+- `GET /api/v1/accounts/total-balance` - **Authenticated** - Get total balance (User-owned accounts)
 
-### Transactions Routes
-- `POST /api/v1/transactions/create`
-- `GET /api/v1/transactions/`
-- `PATCH /api/v1/transactions/update/:id`
-- `DELETE /api/v1/transactions/delete/:id`
-- `GET /api/v1/transactions/aggregate`
+### Transaction Management Module
+- `POST /api/v1/transactions/create` - **Authenticated** - Create transaction (User-owned transactions)
+- `GET /api/v1/transactions/` - **Authenticated** - Get all transactions (User-owned transactions)
+- `PATCH /api/v1/transactions/update/:id` - **Authenticated** - Update transaction (User-owned transactions)
+- `DELETE /api/v1/transactions/delete/:id` - **Authenticated** - Delete transaction (User-owned transactions)
+- `GET /api/v1/transactions/aggregate` - **Authenticated** - Get aggregated transaction data (User-owned transactions)
 
-### Dashboard Routes
-- `GET /api/v1/dashboard/`
+### Dashboard Module
+- `GET /api/v1/dashboard/` - **Authenticated** - Get financial overview and analytics (User data aggregation)
 
-### Reports Routes
-- `GET /api/v1/reports/`
-- `GET /api/v1/reports/export`
+### Reporting Module
+- `GET /api/v1/reports/` - **Authenticated** - Generate financial reports (User data only)
+- `GET /api/v1/reports/export` - **Authenticated** - Export transactions (User data only)
 
-### Categories Routes
-- `POST /api/v1/categories/create`
-- `GET /api/v1/categories/`
-- `PATCH /api/v1/categories/update/:id`
-- `DELETE /api/v1/categories/delete/:id`
+### Category Management Module
+- `POST /api/v1/categories/create` - **Authenticated** - Create category (System + user categories)
+- `GET /api/v1/categories/` - **Authenticated** - Get all categories (System + user categories)
+- `PATCH /api/v1/categories/update/:id` - **Authenticated** - Update category (System + user categories)
+- `DELETE /api/v1/categories/delete/:id` - **Authenticated** - Delete category (System + user categories)
 
-### Budgets Routes
-- `POST /api/v1/budgets/create`
-- `GET /api/v1/budgets/`
-- `PATCH /api/v1/budgets/update/:id`
-- `DELETE /api/v1/budgets/delete/:id`
+### Budget Management Module
+- `POST /api/v1/budgets/create` - **Authenticated** - Create budget (User-owned budgets)
+- `GET /api/v1/budgets/` - **Authenticated** - Get all budgets (User-owned budgets)
+- `PATCH /api/v1/budgets/update/:id` - **Authenticated** - Update budget (User-owned budgets)
+- `DELETE /api/v1/budgets/delete/:id` - **Authenticated** - Delete budget (User-owned budgets)
 
-### Recurring Transactions Routes
-- `POST /api/v1/recurring-transactions/create`
-- `GET /api/v1/recurring-transactions/`
-- `PATCH /api/v1/recurring-transactions/update/:id`
-- `DELETE /api/v1/recurring-transactions/delete/:id`
+### Recurring Transactions Module
+- `POST /api/v1/recurring-transactions/create` - **Authenticated** - Create recurring transaction (User-owned recurring transactions)
+- `GET /api/v1/recurring-transactions/` - **Authenticated** - Get all recurring transactions (User-owned recurring transactions)
+- `PATCH /api/v1/recurring-transactions/update/:id` - **Authenticated** - Update recurring transaction (User-owned recurring transactions)
+- `DELETE /api/v1/recurring-transactions/delete/:id` - **Authenticated** - Delete recurring transaction (User-owned recurring transactions)
 
-## 7. API Specification (Revised)
+### System Logs Module
+- `GET /api/v1/logs/` - **Authenticated** - Get user activity logs (User activity logs)
+
+**Note**: All authenticated endpoints require the `DeserializeUser` middleware and enforce data scope restrictions to ensure users can only access their own data.
 
 All API responses will adhere to the following structure:
 
@@ -607,8 +606,7 @@ All API responses will adhere to the following structure:
               "createdAt": "2025-10-09T10:00:00Z"
             },
             "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-          },
-          "error": null
+          }
         }
         ```
 
@@ -642,8 +640,7 @@ All API responses will adhere to the following structure:
               "createdAt": "2025-10-09T10:00:00Z"
             },
             "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-          },
-          "error": null
+          }
         }
         ```
 
@@ -661,11 +658,10 @@ All API responses will adhere to the following structure:
           "message": "Profile retrieved successfully",
           "data": {
             "personal": {
-              "fullName": "John Doe",
+              "name": "John Doe",
               "email": "john.doe@example.com"
             }
-          },
-          "error": null
+          }
         }
         ```
 
@@ -689,19 +685,36 @@ All API responses will adhere to the following structure:
         ```json
         {
           "success": true,
-          "message": "Password changed successfully",
-          "data": null,
-          "error": null
+          "message": "Password changed successfully"
         }
         ```
 
 - **Endpoint: `GET /api/v1/auth/google/login`**
 
-    - **Description:** Initiates Google OAuth 2.0 login flow.
+    - **Description:** Initiates Google OAuth 2.0 login flow. Redirects the user to the Google login page.
 
 - **Endpoint: `GET /api/v1/auth/google/callback`**
 
-    - **Description:** Handles the callback from Google OAuth 2.0.
+    - **Description:** Handles the callback from Google OAuth 2.0. Exchanges the authorization code for an access token, fetches user info, and then logs in or creates a new user.
+    
+    - **Success Response (200 OK):**
+        
+        ```json
+        {
+          "success": true,
+          "message": "Login successful",
+          "data": {
+            "user": {
+              "id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+              "name": "John Doe",
+              "email": "john.doe@example.com",
+              "provider": "google",
+              "createdAt": "2025-10-09T10:00:00Z"
+            },
+            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        }
+        ```
 
 ---
 
@@ -726,14 +739,14 @@ All API responses will adhere to the following structure:
           "message": "Account created successfully",
           "data": {
             "id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+            "userId": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
             "name": "My Savings Account",
             "type": "savings",
             "balance": 1000.00,
-            "is_active": true,
-            "created_at": "2025-10-09T10:00:00Z",
-            "updated_at": "2025-10-09T10:00:00Z"
-          },
-          "error": null
+            "isActive": true,
+            "createdAt": "2025-10-09T10:00:00Z",
+            "updatedAt": "2025-10-09T10:00:00Z"
+          }
         }
         ```
 
@@ -749,15 +762,15 @@ All API responses will adhere to the following structure:
           "data": [
             {
               "id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+              "userId": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
               "name": "My Savings Account",
               "type": "savings",
               "balance": 1000.00,
-              "is_active": true,
-              "created_at": "2025-10-09T10:00:00Z",
-              "updated_at": "2025-10-09T10:00:00Z"
+              "isActive": true,
+              "createdAt": "2025-10-09T10:00:00Z",
+              "updatedAt": "2025-10-09T10:00:00Z"
             }
-          ],
-          "error": null
+          ]
         }
         ```
 
@@ -770,7 +783,7 @@ All API responses will adhere to the following structure:
         {
           "name": "My Updated Savings Account",
           "type": "savings",
-          "is_active": false
+          "isActive": false
         }
         ```
     - **Success Response (200 OK):**
@@ -780,14 +793,14 @@ All API responses will adhere to the following structure:
           "message": "Account updated successfully",
           "data": {
             "id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+            "userId": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
             "name": "My Updated Savings Account",
             "type": "savings",
             "balance": 1000.00,
-            "is_active": false,
-            "created_at": "2025-10-09T10:00:00Z",
-            "updated_at": "2025-10-09T10:05:00Z"
-          },
-          "error": null
+            "isActive": false,
+            "createdAt": "2025-10-09T10:00:00Z",
+            "updatedAt": "2025-10-09T10:05:00Z"
+          }
         }
         ```
 
@@ -799,9 +812,7 @@ All API responses will adhere to the following structure:
         ```json
         {
           "success": true,
-          "message": "Account deleted successfully",
-          "data": null,
-          "error": null
+          "message": "Account deleted successfully"
         }
         ```
 
@@ -816,8 +827,7 @@ All API responses will adhere to the following structure:
           "message": "Total balance retrieved successfully",
           "data": {
             "total_balance": 5000.00
-          },
-          "error": null
+          }
         }
         ```
 
@@ -832,13 +842,13 @@ All API responses will adhere to the following structure:
     - **Request Body:**
         ```json
         {
-          "account_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
-          "category_id": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
-          "budget_id": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6", // Optional
+          "accountId": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+          "categoryId": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+          "budgetId": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6", // Optional
           "description": "Groceries",
           "amount": 75.50,
-          "type": "expense",
-          "transaction_date": "2025-10-09"
+          "date": "2025-10-09",
+          "note": "Weekly grocery shopping"
         }
         ```
     - **Success Response (201 Created):**
@@ -848,17 +858,24 @@ All API responses will adhere to the following structure:
           "message": "Transaction created successfully",
           "data": {
             "id": "c1d2e3f4-g5h6-i7j8-k9l0-m1n2o3p4q5r6",
-            "account_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
-            "category_id": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
-            "budget_id": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
+            "userId": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
+            "accountId": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+            "categoryId": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+            "budgetId": {
+                "UUID": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
+                "Valid": true
+            },
             "description": "Groceries",
             "amount": 75.50,
             "type": "expense",
-            "transaction_date": "2025-10-09",
-            "created_at": "2025-10-09T10:00:00Z",
-            "updated_at": "2025-10-09T10:00:00Z"
-          },
-          "error": null
+            "transactionDate": "2025-10-09T00:00:00Z",
+            "note": {
+                "String": "Weekly grocery shopping",
+                "Valid": true
+            },
+            "createdAt": "2025-10-09T10:00:00Z",
+            "updatedAt": "2025-10-09T10:00:00Z"
+          }
         }
         ```
 
@@ -866,15 +883,44 @@ All API responses will adhere to the following structure:
 
     - **Description:** Retrieves all transactions for the authenticated user.
     - **Authorization:** Authenticated User
-    - **Produce:**  json
-    - **Param** page query int false "Page number"
-    - **Param** limit query int false "Number of items per page"
-    - **Param** description query string false "Filter by description"
-    - **Param** category query string false "Filter by category ID"
-    - **Param** account query string false "Filter by account ID"
-    - **Param** startDate query string false "Filter by start date (YYYY-MM-DD)"
-    - **Param** endDate query string false "Filter by end date (YYYY-MM-DD)"
-    - **Param** budget query string false "Filter by budget ID"
+    - **Query Parameters:**
+        - `page` (int, optional): Page number (default: 1)
+        - `limit` (int, optional): Number of items per page (default: 10)
+        - `description` (string, optional): Filter by description
+        - `category` (string, optional): Filter by category ID
+        - `account` (string, optional): Filter by account ID
+        - `budget` (string, optional): Filter by budget ID
+        - `startDate` (string, optional): Filter by start date (YYYY-MM-DD)
+        - `endDate` (string, optional): Filter by end date (YYYY-MM-DD)
+    - **Success Response (200 OK):**
+        ```json
+        {
+          "success": true,
+          "message": "Transactions retrieved successfully",
+          "data": [
+            {
+              "id": "c1d2e3f4-g5h6-i7j8-k9l0-m1n2o3p4q5r6",
+              "userId": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
+              "accountId": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+              "categoryId": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+              "budgetId": {
+                "UUID": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
+                "Valid": true
+              },
+              "description": "Groceries",
+              "amount": 75.50,
+              "type": "expense",
+              "transactionDate": "2025-10-09T00:00:00Z",
+              "note": {
+                "String": "Weekly grocery shopping",
+                "Valid": true
+              },
+              "createdAt": "2025-10-09T10:00:00Z",
+              "updatedAt": "2025-10-09T10:00:00Z"
+            }
+          ]
+        }
+        ```
 
 - **Endpoint: `PATCH /api/v1/transactions/update/:id`**
 
@@ -883,13 +929,13 @@ All API responses will adhere to the following structure:
     - **Request Body:**
         ```json
         {
-          "account_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
-          "category_id": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
-          "budget_id": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6", // Optional
+          "accountId": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+          "categoryId": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+          "budgetId": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6", // Optional
           "description": "Weekly Groceries",
           "amount": 80.00,
-          "type": "expense",
-          "transaction_date": "2025-10-09"
+          "date": "2025-10-09",
+          "note": "Updated note"
         }
         ```
     - **Success Response (200 OK):**
@@ -899,17 +945,24 @@ All API responses will adhere to the following structure:
           "message": "Transaction updated successfully",
           "data": {
             "id": "c1d2e3f4-g5h6-i7j8-k9l0-m1n2o3p4q5r6",
-            "account_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
-            "category_id": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
-            "budget_id": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
+            "userId": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
+            "accountId": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+            "categoryId": "b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+            "budgetId": {
+                "UUID": "f1g2h3i4-j5k6-l7m8-n9o0-p1q2r3s4t5u6",
+                "Valid": true
+            },
             "description": "Weekly Groceries",
             "amount": 80.00,
             "type": "expense",
-            "transaction_date": "2025-10-09",
-            "created_at": "2025-10-09T10:00:00Z",
-            "updated_at": "2025-10-09T10:10:00Z"
-          },
-          "error": null
+            "transactionDate": "2025-10-09T00:00:00Z",
+            "note": {
+                "String": "Updated note",
+                "Valid": true
+            },
+            "createdAt": "2025-10-09T10:00:00Z",
+            "updatedAt": "2025-10-09T10:10:00Z"
+          }
         }
         ```
 
@@ -921,9 +974,7 @@ All API responses will adhere to the following structure:
         ```json
         {
           "success": true,
-          "message": "Transaction deleted successfully",
-          "data": null,
-          "error": null
+          "message": "Transaction deleted successfully"
         }
         ```
 
@@ -931,6 +982,9 @@ All API responses will adhere to the following structure:
 
     - **Description:** Retrieves aggregate data for transactions.
     - **Authorization:** Authenticated User
+    - **Query Parameters:**
+        - `startDate` (string, optional): Start date (YYYY-MM-DD)
+        - `endDate` (string, optional): End date (YYYY-MM-DD)
     - **Success Response (200 OK):**
         ```json
         {
@@ -940,8 +994,7 @@ All API responses will adhere to the following structure:
             "total_income": 5000.00,
             "total_expense": 1250.75,
             "net_income": 3749.25
-          },
-          "error": null
+          }
         }
         ```
 
@@ -957,13 +1010,32 @@ All API responses will adhere to the following structure:
         ```json
         {
           "success": true,
-          "message": "Dashboard summary retrieved successfully",
+          "message": "Dashboard data retrieved successfully",
           "data": {
-            "total_balance": 5000.00,
-            "monthly_income": 2000.00,
-            "monthly_expense": 850.50,
-            "monthly_savings": 1149.50,
-            "recent_transactions": [
+            "summary": {
+              "totalBalance": {
+                "total_balance": 5000.00
+               },
+              "monthlyIncome": 2000.00,
+              "monthlyExpenses": 850.50,
+              "monthlySavings": 1149.50
+            },
+            "graphs": {
+              "incomeVsExpense": [],
+              "spendingByCategory": [
+                {
+                  "category": "Groceries",
+                  "total": 3000.00
+                }
+              ],
+              "earningByCategory": [
+                {
+                  "category": "Salary",
+                  "total": 5000.00
+                }
+              ]
+            },
+            "recentTransactions": [
               {
                 "id": "d1e2f3g4-h5i6-j7k8-l9m0-n1o2p3q4r5s6",
                 "description": "Salary",
@@ -972,8 +1044,7 @@ All API responses will adhere to the following structure:
                 "transaction_date": "2025-10-01"
               }
             ]
-          },
-          "error": null
+          }
         }
         ```
 
@@ -985,17 +1056,20 @@ All API responses will adhere to the following structure:
 
     - **Description:** Generates a financial report.
     - **Authorization:** Authenticated User
+    - **Query Parameters:**
+        - `from` (string, optional): Start date (YYYY-MM-DD)
+        - `to` (string, optional): End date (YYYY-MM-DD)
     - **Success Response (200 OK):**
         ```json
         {
           "success": true,
           "message": "Report generated successfully",
           "data": {
-            "start_date": "2025-01-01",
-            "end_date": "2025-12-31",
-            "total_income": 24000.00,
-            "total_expense": 15000.00,
-            "net_income": 9000.00,
+            "summary": {
+              "total_income": 24000.00,
+              "total_expense": 15000.00,
+              "net_income": 9000.00
+            },
             "spending_by_category": [
               {
                 "category": "Groceries",
@@ -1006,8 +1080,7 @@ All API responses will adhere to the following structure:
                 "total": 12000.00
               }
             ]
-          },
-          "error": null
+          }
         }
         ```
 
@@ -1015,6 +1088,9 @@ All API responses will adhere to the following structure:
 
     - **Description:** Exports transaction data to a CSV file.
     - **Authorization:** Authenticated User
+    - **Query Parameters:**
+        - `from` (string, optional): Start date (YYYY-MM-DD)
+        - `to` (string, optional): End date (YYYY-MM-DD)
     - **Success Response (200 OK):**
         - **Content-Type:** `text/csv`
         - **Body:** (CSV file content)
@@ -1313,107 +1389,186 @@ All API responses will adhere to the following structure:
         }
         ```
 
-
 ## 7. Authentication & Authorization
 
 ### 7.1. Authentication Strategy
 
-The system employs a JWT-based authentication strategy for its stateless API, with enhanced token management.
+The system implements a secure, stateless JWT-based authentication system with enhanced token management and refresh capabilities.
 
-**Flow:**
+**Authentication Flow:**
 
-1. A user submits credentials (email/password) or an OAuth token (from Google).
-    
-2. The server validates the credentials/token.
-    
-3. If valid, the server checks the `jwt_tokens` table for an existing valid token for the user.
-    
-4. If an existing valid token is found, it is returned. If the existing token is expired, it is removed.
-    
-5. If no valid token exists (or the previous one was removed), a new signed JWT is generated containing a payload with the `user_id` and an expiration timestamp (`exp`). This new token is stored in the `jwt_tokens` table (replacing any old token for that user).
-    
-6. The server sends this JWT back to the client.
-    
-7. The client application stores the JWT securely (e.g., in an HttpOnly cookie or secure storage).
-    
-8. For all subsequent requests to protected endpoints, the client must include the JWT in the `Authorization` header with the `Bearer` scheme (`Authorization: Bearer <token>`).
-    
-9. A middleware on the server intercepts each request, validates the JWT's signature and expiration, and crucially, checks if the token exists and is valid in the `jwt_tokens` table. If valid, it extracts the `user_id` to process the request within the user's scope.
-    
-10. Tokens will have a short lifespan (e.g., 1 hour), and a refresh token mechanism will be implemented for a seamless user experience.
-    
+1. **Credential Submission**: User submits email/password or initiates OAuth flow with Google
+2. **Credential Validation**: Server validates credentials against database or OAuth provider
+3. **Token Check**: System queries `jwt_tokens` table for existing valid tokens for the user
+4. **Token Management**:
+   - If valid token exists: return existing token
+   - If token expired: remove expired token and generate new one
+   - If no valid token: generate new JWT token
+5. **Token Generation**: New JWT signed with `JWT_SECRET` containing:
+   ```json
+   {
+     "user_id": "uuid",
+     "exp": 168h_from_issue,
+   }
+   ```
+6. **Token Storage**: New token stored in `jwt_tokens` table with user association
+7. **Client Storage**: JWT securely stored in HttpOnly cookies or secure local storage
+8. **Request Authentication**: Client includes JWT in `Authorization: Bearer <token>` header
+9. **Middleware Validation**: Server validates JWT signature, expiration, and database existence
+10. **Refresh Mechanism**: Short-lived access tokens (168h)
 
 ### 7.2. Authorization Strategy
 
-Authorization is managed via Role-Based Access Control (RBAC). For the current scope, the roles are simple.
+The system employs Role-Based Access Control (RBAC) with resource-level ownership validation.
 
-**Roles:**
+**Roles & Permissions:**
 
-- **Public:** Any unauthenticated user.
-    
-- **Authenticated User:** Any user who has successfully logged in and possesses a valid JWT.
-    
+| Role | Description | Access Scope |
+|------|-------------|--------------|
+| **Public** | Unauthenticated users | Authentication endpoints only |
+| **Authenticated User** | Verified system users | Full access to owned resources |
 
-Permissions:
+**Endpoint Authorization Matrix:**
 
-| Endpoint Group          | Required Role      | Description                                    |
-| ----------------------- | ------------------ | ---------------------------------------------- |
-| /api/v1/auth/*          | Public             | User registration and login.                   |
-| /api/v1/users/me        | Authenticated User | All profile management operations.             |
-| /api/v1/accounts/**     | Authenticated User | Full CRUD on the user's own accounts.          |
-| /api/v1/transactions/** | Authenticated User | Full CRUD on the user's own transactions.      |
-| /api/v1/categories/**   | Authenticated User | Full CRUD on the user's own categories.        |
-| /api/v1/budgets/**      | Authenticated User | Full CRUD on the user's own budgets.           |
-| /api/v1/dashboard/**    | Authenticated User | Access to dashboard and summary data.          |
-| /api/v1/reports/**      | Authenticated User | Access to generate personal financial reports. |
+| Module | Endpoint Pattern | Required Role | Data Scope | Description |
+|--------|------------------|---------------|------------|-------------|
+| **Authentication** | `/api/v1/auth/*` | Public | N/A | Registration, login, OAuth flows |
+| **User Management** | `/api/v1/users/me` | Authenticated | Own data only | Profile management operations |
+| **Account Management** | `/api/v1/accounts/*` | Authenticated | User-owned accounts | Full CRUD on user's financial accounts |
+| **Transaction Management** | `/api/v1/transactions/*` | Authenticated | User-owned transactions | Complete transaction lifecycle management |
+| **Category Management** | `/api/v1/categories/*` | Authenticated | System + user categories | Category setup and management |
+| **Budget Management** | `/api/v1/budgets/*` | Authenticated | User-owned budgets | Budget planning and tracking |
+| **Recurring Transactions** | `/api/v1/recurring/*` | Authenticated | User-owned recurring transactions | Automated transaction management |
+| **Dashboard** | `/api/v1/dashboard/*` | Authenticated | User data aggregation | Financial overview and analytics |
+| **Reporting** | `/api/v1/reports/*` | Authenticated | User data only | Financial reporting and insights |
+| **System Logs** | `/api/v1/logs/*` | Authenticated | User activity logs | Audit trail and activity monitoring |
+
+### 7.3. Security Implementation Details
+
+**JWT Configuration:**
+- **Access Token Expiry**: 1 hour (enhanced security)
+- **Token Storage**: Database-persisted for revocation capability
+- **Signature Algorithm**: HS256 with 32-character minimum secret
+
+**Database-Level Security:**
+- **CASCADE DELETE**: User deletion removes all associated data
+- **RESTRICT DELETE**: Protected category deletions
+- **SET NULL**: Optional relationships maintain data integrity
+- **UUID Primary Keys**: Obfuscated resource identifiers
+
+**API Security Measures:**
+- **Rate Limiting**: 100 requests per minute per user
+- **CORS Protection**: Configurable client origins
+- **Input Validation**: Comprehensive request sanitization
+- **SQL Injection Protection**: Parameterized queries throughout
 
 ## 8. Environment Configuration
 
-The following `.env.example` file provides a template for all necessary configuration variables.
+The system configuration is managed through environment variables with the following structure:
 
-```
-# -------------------------------------
-# Application Configuration
-# -------------------------------------
-# The port the application will run on (e.g., 8080)
+```env
+# =====================================
+# Application Core Configuration
+# =====================================
+# Network binding configuration
+HOST=localhost
 PORT=8080
-# Application environment ('development', 'production', 'staging')
-APP_ENV=development
-# The allowed origin for CORS policy (e.g., http://localhost:3000)
-CLIENT_ORIGIN=
 
-# -------------------------------------
+# Runtime environment and behavior
+APP_ENV=development  # development|production|staging
+
+# Cross-Origin Resource Sharing
+CLIENT_ORIGIN=http://localhost:3000
+
+# =====================================
 # Database Configuration (PostgreSQL)
-# -------------------------------------
+# =====================================
+# Connection parameters
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
-DB_PASSWORD=your_postgres_password
+DB_PASSWORD=your_secure_postgres_password
 DB_NAME=finance_tracker
-DB_SSL_MODE=disable # Use 'require' in production
 
-# -------------------------------------
-# Security Configuration
-# -------------------------------------
-# A very strong secret key for signing JWTs
-JWT_SECRET=a_super_secret_string_32_chars_long
-# JWT token expiration time (e.g., 1h, 15m, 7d)
-JWT_EXPIRES_IN=1h
-# JWT refresh token expiration time
-JWT_REFRESH_EXPIRES_IN=7d
+# Connection security and performance
+DB_SSL_MODE=disable  # require|verify-full|disable
+DB_MAX_OPEN_CONNS=25
+DB_MAX_IDLE_CONNS=5
+DB_CONN_MAX_LIFETIME=5m
 
-# -------------------------------------
-# External Services (Google OAuth)
-# -------------------------------------
-GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your_google_client_secret
+# Connection string example:
+# psql -U ${DB_USER} -d ${DB_NAME} -h ${DB_HOST} -p ${DB_PORT}
+
+# =====================================
+# Security & JWT Configuration
+# =====================================
+# JWT Signing and Validation
+JWT_SECRET=minimum_32_character_super_secure_random_string
+JWT_EXPIRES_IN=168h  # 7 days for refresh tokens
+JWT_ACCESS_EXPIRES_IN=1h  # 1 hour for access tokens
+
+# Token refresh configuration
+JWT_REFRESH_ENABLED=true
+JWT_REFRESH_EXPIRES_IN=168h
+
+# =====================================
+# External OAuth Services
+# =====================================
+# Google OAuth 2.0 Configuration
+GOOGLE_CLIENT_ID=your_google_oauth_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
 GOOGLE_OAUTH_REDIRECT_URL=http://localhost:8080/api/v1/auth/google/callback
 
-# -------------------------------------
-# Rate Limiting Configuration
-# -------------------------------------
-# Max requests per minute for general endpoints
+# =====================================
+# Rate Limiting & Performance
+# =====================================
+# General API rate limiting
 RATE_LIMITER_MAX=100
-# Duration of the rate limit window in minutes
 RATE_LIMITER_DURATION_MINUTES=1
+
+# Authentication-specific rate limits
+AUTH_RATE_LIMITER_MAX=10
+AUTH_RATE_LIMITER_DURATION_MINUTES=1
+
+# =====================================
+# Logging & Monitoring
+# =====================================
+# Log level and output configuration
+LOG_LEVEL=info  # debug|info|warn|error
+LOG_FORMAT=json  # json|text
+
+# Monitoring and observability
+METRICS_ENABLED=true
+HEALTH_CHECK_ENDPOINT=/health
+
+# =====================================
+# Advanced Features
+# =====================================
+# Scheduled task configuration
+SCHEDULER_ENABLED=true
+RECURRING_TRANSACTION_HOUR=2  # 2 AM daily processing
+
+# Data export and backup
+BACKUP_ENABLED=true
+BACKUP_SCHEDULE=0 2 * * *  # 2 AM daily
 ```
+
+### Configuration Notes:
+
+**Security Enhancements:**
+- Separate access and refresh token expiration for balanced security and usability
+- Database connection pooling for optimal performance
+- Environment-specific SSL modes for database connections
+
+**Production Considerations:**
+- Set `APP_ENV=production` for production deployments
+- Enable `DB_SSL_MODE=require` or `verify-full` in production
+- Use strong, randomly generated `JWT_SECRET` (32+ characters)
+- Configure proper `CLIENT_ORIGIN` for your frontend application
+
+**Development Setup:**
+- Default to `development` mode with detailed logging
+- Local database with SSL disabled
+- Extended token expiration for testing convenience
+
+This configuration provides a robust foundation for both development and production environments while maintaining security best practices and system performance.
