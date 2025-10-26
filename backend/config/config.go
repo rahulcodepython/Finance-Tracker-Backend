@@ -4,6 +4,7 @@ package config
 import (
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv" // Used for loading environment variables from a .env file
 	"golang.org/x/oauth2"
@@ -12,8 +13,11 @@ import (
 
 // serverConfig holds the configuration for the HTTP server.
 type serverConfig struct {
-	Host string // Server host
-	Port string // Server port
+	Host              string // Server host
+	Port              string // Server port
+	ClientOrigin      string // Client origin
+	RateLimit         int    // Rate limit
+	RateLimitDuration int    // Rate limit duration
 }
 
 // database holds the configuration for the database connection.
@@ -34,11 +38,13 @@ type jwt struct {
 
 // Config holds the entire application configuration.
 type Config struct {
-	ServerConfig      serverConfig      // Server configuration
-	GoogleOauthConfig *oauth2.Config    // Google OAuth2 configuration
-	Database          database          // Database configuration
-	JWT               jwt               // JWT configuration
+	ServerConfig      serverConfig   // Server configuration
+	GoogleOauthConfig *oauth2.Config // Google OAuth2 configuration
+	Database          database       // Database configuration
+	JWT               jwt            // JWT configuration
 }
+
+var CFG *Config
 
 // parseEnv retrieves the value of an environment variable or returns a default value if the variable is not set.
 func parseEnv(key string, defaultValue string) string {
@@ -50,6 +56,17 @@ func parseEnv(key string, defaultValue string) string {
 	return envValue
 }
 
+// parseIntEnv retrieves an environment variable and converts it to an integer.
+func parseIntEnv(key string, defaultValue string) int {
+	s := parseEnv(key, defaultValue)
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		log.Printf("Could not parse environment variable %s as integer. Using default value: %s", key, defaultValue)
+		return 0
+	}
+	return i
+}
+
 // LoadConfig loads the application configuration from a .env file and the environment.
 func LoadConfig() *Config {
 	// Load environment variables from the .env file.
@@ -58,11 +75,14 @@ func LoadConfig() *Config {
 		log.Fatal("Error loading .env file")
 	}
 
-	// Return a new Config struct populated with values from the environment.
-	return &Config{
+	// Initialize the Config struct with values from environment variables or defaults.
+	cfg := &Config{
 		ServerConfig: serverConfig{
-			Host: parseEnv("HOST", "localhost"),
-			Port: parseEnv("PORT", "8000"),
+			Host:              parseEnv("HOST", "localhost"),
+			Port:              parseEnv("PORT", "8000"),
+			ClientOrigin:      parseEnv("CLIENT_ORIGIN", "http://localhost:3000"),
+			RateLimit:         parseIntEnv("RATE_LIMIT", "5"),
+			RateLimitDuration: parseIntEnv("RATE_LIMIT_DURATION", "1"),
 		},
 		GoogleOauthConfig: &oauth2.Config{
 			RedirectURL:  parseEnv("GOOGLE_OAUTH_REDIRECT_URL", ""),
@@ -84,4 +104,8 @@ func LoadConfig() *Config {
 			JWTExpiresIn: parseEnv("JWT_EXPIRES_IN", "1h"),
 		},
 	}
+
+	CFG = cfg
+
+	return cfg
 }

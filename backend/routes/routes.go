@@ -7,12 +7,23 @@ import (
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/middleware"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
+
+	// "github.com/gofiber/fiber/v2/middleware/recover" is a middleware that recovers from panics anywhere in the stack chain.
+	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
 // Setup configures the routes for the application.
 func Setup(app *fiber.App) {
 	// Apply the logger middleware to all routes.
 	app.Use(middleware.Logger())
+
+	// Apply the CORS middleware to all routes.
+	app.Use(middleware.Cors())
+
+	// Apply the Limiter middleware to all routes.
+	app.Use(middleware.LimiterMiddleware())
+
+	app.Use(recover.New())
 
 	// Create a new group for the API routes.
 	api := app.Group("/api")

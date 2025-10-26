@@ -2,6 +2,7 @@
 package middleware
 
 import (
+	"errors"
 	"strings"
 	"time"
 
@@ -25,7 +26,7 @@ func DeserializeUser(c *fiber.Ctx) error {
 
 	// Check if the Authorization header is in the correct format.
 	if !strings.HasPrefix(authorization, "Bearer ") {
-		return utils.UnauthorizedAccess(c, nil, "Unauthorized Access")
+		return utils.UnauthorizedAccess(c, errors.New("invalid token format"), "Unauthorized Access")
 	}
 
 	// Extract the token from the Authorization header.
@@ -33,7 +34,7 @@ func DeserializeUser(c *fiber.Ctx) error {
 
 	// Check if the token is empty.
 	if tokenString == "" {
-		return utils.UnauthorizedAccess(c, nil, "Unauthorized Access")
+		return utils.UnauthorizedAccess(c, errors.New("empty token"), "Unauthorized Access")
 	}
 
 	// Parse the JWT token.
