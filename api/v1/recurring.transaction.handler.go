@@ -1,3 +1,4 @@
+// Package v1 provides handlers for version 1 of the API.
 package v1
 
 import (
@@ -11,49 +12,57 @@ import (
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
-// CreateRecurringTransaction godoc
-// @Summary Create a new recurring transaction
-// @Description Creates a new recurring transaction for the authenticated user.
-// @Tags recurring-transactions
-// @Security ApiKeyAuth
-// @Accept  json
-// @Produce  json
-// @Param input body CreateRecurringTransactionInput true "Create Recurring Transaction Input"
-// @Success 201 {object} map[string]interface{} "Recurring transaction created successfully"
-// @Router /recurring-transactions/create [post]
-func CreateRecurringTransaction(c *fiber.Ctx) error {
-	type CreateRecurringTransactionInput struct {
-		AccountID          string                    `json:"accountId"`
-		CategoryID         string                    `json:"categoryId"`
-		BudgetID           string                    `json:"budgetId"`
-		Description        string                    `json:"description"`
-		Amount             float64                   `json:"amount"`
-		Note               string                    `json:"note"`
-		RecurringFrequency models.RecurringFrequency `json:"recurringFrequency"`
-		RecurringDate      int                       `json:"recurringDate"`
-	}
+// CreateRecurringTransactionInput defines the input structure for creating a new recurring transaction.
+type CreateRecurringTransactionInput struct {
+	AccountID          string                    `json:"accountId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
+	CategoryID         string                    `json:"categoryId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
+	BudgetID           string                    `json:"budgetId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
+	Description        string                    `json:"description" example:"Monthly Subscription"`
+	Amount             float64                   `json:"amount" example:"15.99"`
+	Note               string                    `json:"note" example:"Streaming service"`
+	RecurringFrequency models.RecurringFrequency `json:"recurringFrequency" example:"Monthly"`
+	RecurringDate      int                       `json:"recurringDate" example:"15"`
+}
 
+// CreateRecurringTransaction handles the creation of a new recurring transaction.
+// @Summary      Create a new recurring transaction
+// @Description  Creates a new recurring transaction for the authenticated user.
+// @Tags         Recurring Transactions
+// @Accept       json
+// @Produce      json
+// @Param        input body      CreateRecurringTransactionInput true "Create Recurring Transaction Input"
+// @Success      201  {object}  utils.Response
+// @Failure      400  {object}  utils.Response
+// @Failure      500  {object}  utils.Response
+// @Router       /recurring-transactions/create [post]
+func CreateRecurringTransaction(c *fiber.Ctx) error {
+	// Create a new instance of the CreateRecurringTransactionInput struct.
 	var input CreateRecurringTransactionInput
 
+	// Parse the request body into the input struct.
 	if err := c.BodyParser(&input); err != nil {
-		return utils.BadResponse(c, err, "Invalid request")
+		return utils.BadResponse(c, err, "Invalid request payload")
 	}
 
+	// Get the user ID from the context.
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
 		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
+	// Parse the account ID from the input.
 	accountID, err := uuid.Parse(input.AccountID)
 	if err != nil {
 		return utils.BadResponse(c, err, "Invalid account ID")
 	}
 
+	// Parse the category ID from the input.
 	categoryID, err := uuid.Parse(input.CategoryID)
 	if err != nil {
 		return utils.BadResponse(c, err, "Invalid category ID")
 	}
 
+	// Parse the budget ID from the input, if provided.
 	var budgetID uuid.NullUUID
 	if input.BudgetID != "" {
 		parsedBudgetId, err := uuid.Parse(input.BudgetID)
@@ -63,84 +72,100 @@ func CreateRecurringTransaction(c *fiber.Ctx) error {
 		budgetID = uuid.NullUUID{UUID: parsedBudgetId, Valid: true}
 	}
 
+	// Get the database connection.
 	db := database.DB
 
+	// Call the CreateRecurringTransaction service to create the new recurring transaction.
 	recurringTransaction, err := services.CreateRecurringTransaction(userID, accountID, categoryID, budgetID, input.Description, input.Amount, sql.NullString{String: input.Note, Valid: input.Note != ""}, input.RecurringFrequency, input.RecurringDate, db)
 	if err != nil {
 		return utils.InternalServerError(c, err, "Failed to create recurring transaction")
 	}
 
+	// Return a 201 Created response with the new recurring transaction.
 	return utils.OKCreatedResponse(c, "Recurring transaction created successfully", recurringTransaction)
 }
 
-// GetRecurringTransactions godoc
-// @Summary Get all recurring transactions
-// @Description Gets all recurring transactions for the authenticated user.
-// @Tags recurring-transactions
-// @Security ApiKeyAuth
-// @Produce  json
-// @Success 200 {object} map[string]interface{} "Recurring transactions retrieved successfully"
-// @Router /recurring-transactions [get]
+// GetRecurringTransactions handles the retrieval of all recurring transactions for the authenticated user.
+// @Summary      Get all recurring transactions
+// @Description  Retrieves all recurring transactions associated with the authenticated user.
+// @Tags         Recurring Transactions
+// @Produce      json
+// @Success      200  {object}  utils.Response
+// @Failure      400  {object}  utils.Response
+// @Failure      500  {object}  utils.Response
+// @Router       /recurring-transactions [get]
 func GetRecurringTransactions(c *fiber.Ctx) error {
+	// Get the user ID from the context.
 	userID, err := uuid.Parse(c.Locals("user_id").(string))
 	if err != nil {
 		return utils.BadResponse(c, err, "Invalid user ID")
 	}
 
+	// Get the database connection.
 	db := database.DB
 
+	// Call the GetRecurringTransactions service to retrieve the user's recurring transactions.
 	recurringTransactions, err := services.GetRecurringTransactions(userID, db)
 	if err != nil {
-		return utils.InternalServerError(c, err, "Failed to get recurring transactions")
+		return utils.InternalServerError(c, err, "Failed to retrieve recurring transactions")
 	}
 
+	// Return a 200 OK response with the retrieved recurring transactions.
 	return utils.OKResponse(c, "Recurring transactions retrieved successfully", recurringTransactions)
 }
 
-// UpdateRecurringTransaction godoc
-// @Summary Update a recurring transaction
-// @Description Updates a recurring transaction for the authenticated user.
-// @Tags recurring-transactions
-// @Security ApiKeyAuth
-// @Accept  json
-// @Produce  json
-// @Param id path string true "Recurring Transaction ID"
-// @Param input body UpdateRecurringTransactionInput true "Update Recurring Transaction Input"
-// @Success 200 {object} map[string]interface{} "Recurring transaction updated successfully"
-// @Router /recurring-transactions/update/{id} [patch]
-func UpdateRecurringTransaction(c *fiber.Ctx) error {
-	type UpdateRecurringTransactionInput struct {
-		AccountID          string                    `json:"accountId"`
-		CategoryID         string                    `json:"categoryId"`
-		BudgetID           string                    `json:"budgetId"`
-		Description        string                    `json:"description"`
-		Amount             float64                   `json:"amount"`
-		Note               string                    `json:"note"`
-		RecurringFrequency models.RecurringFrequency `json:"recurringFrequency"`
-		RecurringDate      int                       `json:"recurringDate"`
-	}
+// UpdateRecurringTransactionInput defines the input structure for updating a recurring transaction.
+type UpdateRecurringTransactionInput struct {
+	AccountID          string                    `json:"accountId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
+	CategoryID         string                    `json:"categoryId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
+	BudgetID           string                    `json:"budgetId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
+	Description        string                    `json:"description" example:"Updated Monthly Subscription"`
+	Amount             float64                   `json:"amount" example:"19.99"`
+	Note               string                    `json:"note" example:"Upgraded plan"`
+	RecurringFrequency models.RecurringFrequency `json:"recurringFrequency" example:"Monthly"`
+	RecurringDate      int                       `json:"recurringDate" example:"20"`
+}
 
+// UpdateRecurringTransaction handles the update of a specific recurring transaction.
+// @Summary      Update a recurring transaction
+// @Description  Updates the details of a specific recurring transaction for the authenticated user.
+// @Tags         Recurring Transactions
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string                        true "Recurring Transaction ID"
+// @Param        input body      UpdateRecurringTransactionInput true "Update Recurring Transaction Input"
+// @Success      200  {object}  utils.Response
+// @Failure      400  {object}  utils.Response
+// @Failure      500  {object}  utils.Response
+// @Router       /recurring-transactions/update/{id} [patch]
+func UpdateRecurringTransaction(c *fiber.Ctx) error {
+	// Create a new instance of the UpdateRecurringTransactionInput struct.
 	var input UpdateRecurringTransactionInput
 
+	// Parse the request body into the input struct.
 	if err := c.BodyParser(&input); err != nil {
-		return utils.BadResponse(c, err, "Invalid request")
+		return utils.BadResponse(c, err, "Invalid request payload")
 	}
 
+	// Get the recurring transaction ID from the URL parameters.
 	recurringTransactionID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
 		return utils.BadResponse(c, err, "Invalid recurring transaction ID")
 	}
 
+	// Parse the account ID from the input.
 	accountID, err := uuid.Parse(input.AccountID)
 	if err != nil {
 		return utils.BadResponse(c, err, "Invalid account ID")
 	}
 
+	// Parse the category ID from the input.
 	categoryID, err := uuid.Parse(input.CategoryID)
 	if err != nil {
 		return utils.BadResponse(c, err, "Invalid category ID")
 	}
 
+	// Parse the budget ID from the input, if provided.
 	var budgetID uuid.NullUUID
 	if input.BudgetID != "" {
 		parsedBudgetId, err := uuid.Parse(input.BudgetID)
@@ -150,36 +175,44 @@ func UpdateRecurringTransaction(c *fiber.Ctx) error {
 		budgetID = uuid.NullUUID{UUID: parsedBudgetId, Valid: true}
 	}
 
+	// Get the database connection.
 	db := database.DB
 
+	// Call the UpdateRecurringTransaction service to update the recurring transaction.
 	recurringTransaction, err := services.UpdateRecurringTransaction(recurringTransactionID, accountID, categoryID, budgetID, input.Description, input.Amount, sql.NullString{String: input.Note, Valid: input.Note != ""}, input.RecurringFrequency, input.RecurringDate, db)
 	if err != nil {
 		return utils.InternalServerError(c, err, "Failed to update recurring transaction")
 	}
 
+	// Return a 200 OK response with the updated recurring transaction.
 	return utils.OKResponse(c, "Recurring transaction updated successfully", recurringTransaction)
 }
 
-// DeleteRecurringTransaction godoc
-// @Summary Delete a recurring transaction
-// @Description Deletes a recurring transaction for the authenticated user.
-// @Tags recurring-transactions
-// @Security ApiKeyAuth
-// @Produce  json
-// @Param id path string true "Recurring Transaction ID"
-// @Success 200 {object} map[string]interface{} "Recurring transaction deleted successfully"
-// @Router /recurring-transactions/delete/{id} [delete]
+// DeleteRecurringTransaction handles the deletion of a specific recurring transaction.
+// @Summary      Delete a recurring transaction
+// @Description  Deletes a specific recurring transaction for the authenticated user.
+// @Tags         Recurring Transactions
+// @Produce      json
+// @Param        id   path      string  true "Recurring Transaction ID"
+// @Success      200  {object}  utils.Response
+// @Failure      400  {object}  utils.Response
+// @Failure      500  {object}  utils.Response
+// @Router       /recurring-transactions/delete/{id} [delete]
 func DeleteRecurringTransaction(c *fiber.Ctx) error {
+	// Get the recurring transaction ID from the URL parameters.
 	recurringTransactionID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
 		return utils.BadResponse(c, err, "Invalid recurring transaction ID")
 	}
 
+	// Get the database connection.
 	db := database.DB
 
+	// Call the DeleteRecurringTransaction service to delete the recurring transaction.
 	if err := services.DeleteRecurringTransaction(recurringTransactionID, db); err != nil {
 		return utils.InternalServerError(c, err, "Failed to delete recurring transaction")
 	}
 
+	// Return a 200 OK response.
 	return utils.OKResponse(c, "Recurring transaction deleted successfully", nil)
 }

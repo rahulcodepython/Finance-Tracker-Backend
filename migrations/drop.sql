@@ -1,3 +1,5 @@
+-- This script drops all tables, indexes, and types from the database.
+
 DROP INDEX IF EXISTS idx_accounts_user_id;
 DROP INDEX IF EXISTS idx_transactions_user_id_date;
 DROP TABLE IF EXISTS recurring_transactions;

@@ -1,3 +1,4 @@
+// Package database provides functionality for connecting to and interacting with the database.
 package database
 
 import (
@@ -5,14 +6,17 @@ import (
 	"fmt"
 	"log"
 
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // PostgreSQL driver
 	"github.com/rahulcodepython/finance-tracker-backend/backend/config"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
+// DB is a global variable that holds the database connection.
 var DB *sql.DB
 
+// Connect establishes a connection to the database using the provided configuration.
 func Connect(cfg *config.Config) *sql.DB {
+	// Create the data source name (DSN) string from the configuration.
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=Asia/Kolkata",
 		cfg.Database.DBHost,
 		cfg.Database.DBUser,
@@ -24,18 +28,16 @@ func Connect(cfg *config.Config) *sql.DB {
 
 	var err error
 
+	// Open a new database connection.
 	DB, err = sql.Open("postgres", dsn)
-	// This checks if an error occurred while opening the database connection.
 	if err != nil {
-		// If an error occurs, a message is logged.
 		log.Println("Unable to connect with database")
-		// The application is terminated with a fatal error.
 		log.Fatal(err)
 	}
 
-	// PingDB() is called to check if the database connection is alive.
+	// Ping the database to verify the connection.
 	utils.Ping(DB)
 
-	// The database connection is returned.
+	// Return the database connection.
 	return DB
 }

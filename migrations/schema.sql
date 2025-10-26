@@ -1,3 +1,5 @@
+-- This script sets up the entire database schema, including tables, indexes, and types.
+
 CREATE TYPE account_type AS ENUM ('checking', 'savings', 'credit_card', 'cash', 'investment', 'loan', 'upi');
 CREATE TYPE transaction_type AS ENUM ('income', 'expense');
 CREATE TYPE auth_provider AS ENUM ('email', 'google');

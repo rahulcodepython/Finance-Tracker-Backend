@@ -1,3 +1,4 @@
+// Package database provides functionality for connecting to and interacting with the database.
 package database
 
 import (
@@ -8,14 +9,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fatih/color"
-	_ "github.com/lib/pq"
+	"github.com/fatih/color" // Used for colorizing console output
+	_ "github.com/lib/pq"    // PostgreSQL driver
 )
 
-// Migrate reads and executes SQL commands from a file dynamically
+// Migrate reads and executes SQL commands from the schema.sql file to set up the database.
 func Migrate(db *sql.DB) {
+	// Define the path to the SQL migration file.
 	sqlFilePath := "migrations/schema.sql"
 
+	// Read the content of the SQL file.
 	content, err := os.ReadFile(sqlFilePath)
 	if err != nil {
 		log.Fatalf("❌ Failed to read SQL file %s: %v", sqlFilePath, err)
@@ -24,6 +27,7 @@ func Migrate(db *sql.DB) {
 	log.Println("🚀 Starting database migration...")
 	start := time.Now()
 
+	// Split the file content into individual SQL queries.
 	queries := strings.Split(string(content), ";")
 	for _, query := range queries {
 		query = strings.TrimSpace(query)
@@ -31,7 +35,7 @@ func Migrate(db *sql.DB) {
 			continue
 		}
 
-		// Handle dynamic ENUM creation safely
+		// Handle ENUM type creation safely by checking for existence first.
 		if isEnumCreate(query) {
 			typeName := extractEnumName(query)
 			if typeExists(db, typeName) {
@@ -40,12 +44,13 @@ func Migrate(db *sql.DB) {
 			}
 		}
 
-		// Execute SQL
+		// Execute the SQL query.
 		if _, err := db.Exec(query); err != nil {
 			log.Printf("❌ ERROR: Failed executing SQL → %v\n    ↳ %s", err, previewQuery(query))
 			continue
 		}
 
+		// Log a success message for the executed query.
 		logSuccess(query)
 	}
 
@@ -54,13 +59,13 @@ func Migrate(db *sql.DB) {
 	log.Printf("%s Database migration completed successfully in %s\n", green("✅ DONE:"), elapsed.Round(time.Millisecond))
 }
 
-// Check if a query is CREATE TYPE ... AS ENUM
+// isEnumCreate checks if a query is a 'CREATE TYPE ... AS ENUM' statement.
 func isEnumCreate(query string) bool {
 	matched, _ := regexp.MatchString(`(?i)^CREATE\s+TYPE\s+\w+\s+AS\s+ENUM`, query)
 	return matched
 }
 
-// Extract enum type name dynamically
+// extractEnumName extracts the name of the ENUM type from a 'CREATE TYPE' query.
 func extractEnumName(query string) string {
 	re := regexp.MustCompile(`(?i)^CREATE\s+TYPE\s+(\w+)\s+AS\s+ENUM`)
 	matches := re.FindStringSubmatch(query)
@@ -70,7 +75,7 @@ func extractEnumName(query string) string {
 	return "unknown_enum"
 }
 
-// Check if enum type already exists
+// typeExists checks if a given type already exists in the database.
 func typeExists(db *sql.DB, typeName string) bool {
 	var exists bool
 	query := `SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname=$1);`
@@ -81,7 +86,7 @@ func typeExists(db *sql.DB, typeName string) bool {
 	return exists
 }
 
-// Log success dynamically
+// logSuccess logs a formatted success message based on the type of SQL query executed.
 func logSuccess(query string) {
 	green := color.New(color.FgGreen).SprintFunc()
 	yellow := color.New(color.FgYellow).SprintFunc()
@@ -111,7 +116,7 @@ func logSuccess(query string) {
 	}
 }
 
-// Extract table/index/type name dynamically
+// extractName extracts the name of the table, index, or type from a SQL query.
 func extractName(query string, prefixes ...string) string {
 	upper := strings.ToUpper(query)
 	for _, prefix := range prefixes {
@@ -127,7 +132,7 @@ func extractName(query string, prefixes ...string) string {
 	return "unknown"
 }
 
-// Short preview for failed query
+// previewQuery returns a short preview of a SQL query for logging purposes.
 func previewQuery(query string) string {
 	trimmed := strings.ReplaceAll(strings.TrimSpace(query), "\n", " ")
 	if len(trimmed) > 120 {

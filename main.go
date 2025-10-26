@@ -15,17 +15,37 @@ import (
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
+// @title           Finance Tracker API
+// @version         1.0
+// @description     This is a sample server for a finance tracker application.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:8080
+// @BasePath  /api/v1
 func main() {
+	// Load application configuration from environment variables or a config file.
 	cfg := config.LoadConfig()
 
+	// Establish a connection to the database using the loaded configuration.
 	db := database.Connect(cfg)
 
+	// Set the local timezone for the application.
 	utils.LoadTimezone()
 
+	// Apply database migrations to ensure the schema is up to date.
 	database.Migrate(db)
 
+	// Start the background scheduler for recurring tasks.
 	scheduler.StartScheduler(db)
 
+	// Create a new Fiber web server instance with custom configuration.
 	server := fiber.New(fiber.Config{
 		AppName:       "Finance Tracker",
 		ServerHeader:  "Finance Tracker",
@@ -34,50 +54,39 @@ func main() {
 		StrictRouting: true,
 	})
 
+	// Middleware to make the configuration accessible in request handlers.
 	server.Use(func(c *fiber.Ctx) error {
 		c.Locals("cfg", cfg)
 		return c.Next()
 	})
 
-	// app.Get("/swagger/*", swagger.HandlerDefault)
-
-	// router.Router() is called to set up all the application routes and middleware.
-	// It takes the Fiber server, configuration, and database connection as arguments.
+	// Set up all application routes and middleware.
 	routes.Setup(server)
 
-	// address is a string that represents the server address.
-	// It is constructed by combining the server host and port from the configuration.
+	// Construct the server address from the configuration.
 	address := fmt.Sprintf("%s:%s", cfg.ServerConfig.Host, cfg.ServerConfig.Port)
 
-	// A new goroutine is started to run the Fiber server.
-	// This allows the main goroutine to continue and handle graceful shutdown.
+	// Start the Fiber server in a new goroutine to avoid blocking the main thread.
 	go func() {
-		// server.Listen() starts the HTTP server and listens for incoming requests on the specified address.
 		if err := server.Listen(address); err != nil {
-			// If an error occurs while starting the server, log the error and panic.
 			log.Panicf("Server error: %v", err)
 		}
 	}()
 
-	// c is a channel that will receive operating system signals.
-	// It has a buffer size of 1.
+	// Create a channel to listen for operating system signals for graceful shutdown.
 	c := make(chan os.Signal, 1)
-	// signal.Notify() registers the given channel to receive notifications of the specified signals.
-	// In this case, it listens for os.Interrupt (Ctrl+C) and syscall.SIGTERM.
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	// This is a blocking call that waits for a signal to be received on the channel c.
+
+	// Block until a signal is received.
 	<-c
 
-	// A message is printed to the console to indicate that the server is shutting down.
+	// Initiate graceful shutdown of the server.
 	fmt.Println("Gracefully shutting down...")
-	// server.Shutdown() gracefully shuts down the server without interrupting any active connections.
 	_ = server.Shutdown()
 
-	// A message is printed to the console to indicate that cleanup tasks are running.
+	// Perform cleanup tasks, such as closing the database connection.
 	fmt.Println("Running cleanup tasks...")
-	// db.Close() closes the database connection.
 	defer db.Close()
 
-	// A message is printed to the console to indicate that the server has shut down successfully.
 	fmt.Println("Fiber was successful shutdown.")
 }
