@@ -2,8 +2,6 @@
 package v1
 
 import (
-	"strconv"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
@@ -36,12 +34,6 @@ func GetDashboardSummary(c *fiber.Ctx) error {
 	}
 
 	// Get pagination and filter parameters from the query string.
-	page, _ := strconv.Atoi(c.Query("page", "1"))
-	limit, _ := strconv.Atoi(c.Query("limit", "10"))
-	description := c.Query("description")
-	categoryID := c.Query("category")
-	accountID := c.Query("account")
-	budgetID := c.Query("budget")
 	startDate := c.Query("startDate")
 	endDate := c.Query("endDate")
 
@@ -49,11 +41,44 @@ func GetDashboardSummary(c *fiber.Ctx) error {
 	db := database.DB
 
 	// Call the GetDashboardSummary service to retrieve the dashboard data.
-	summary, err := services.GetDashboardSummary(userID, page, limit, description, categoryID, accountID, budgetID, startDate, endDate, db)
+	summary, err := services.GetDashboardSummary(userID, startDate, endDate, db)
 	if err != nil {
 		return utils.InternalServerError(c, err, "Failed to get dashboard summary")
 	}
 
 	// Return a 200 OK response with the dashboard summary.
 	return utils.OKResponse(c, "Dashboard data retrieved successfully", summary)
+}
+
+// ExportReports handles the export of transaction data to a CSV file.
+// @Summary      Export transaction data
+// @Description  Exports transaction data for the authenticated user to a CSV file, optionally filtered by a date range.
+// @Tags         Reports
+// @Produce      text/csv
+// @Param        from query     string false "Start date for the export (YYYY-MM-DD)"
+// @Param        to   query     string false "End date for the export (YYYY-MM-DD)"
+// @Success      200  {file}    file   "CSV file with transaction data"
+// @Failure      400  {object}  utils.Response
+// @Failure      500  {object}  utils.Response
+// @Router       /reports/export [get]
+func ExportReports(c *fiber.Ctx) error {
+	// Get the user ID from the context.
+	userID, err := uuid.Parse(c.Locals("user_id").(string))
+	if err != nil {
+		return utils.BadResponse(c, err, "Invalid user ID")
+	}
+
+	// Get the database connection.
+	db := database.DB
+
+	// Set the response headers for a CSV file download.
+	c.Set("Content-Type", "text/csv")
+	c.Set("Content-Disposition", "attachment; filename=transactions.csv")
+
+	// Call the ExportTransactions service to write the CSV data to the response body.
+	if err := services.ExportTransactions(userID, c.Response().BodyWriter(), db); err != nil {
+		return utils.InternalServerError(c, err, "Failed to export transactions")
+	}
+
+	return nil
 }

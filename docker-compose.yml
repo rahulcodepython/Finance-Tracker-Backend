@@ -1,52 +1,52 @@
 services:
-    # -------------------------------------
-    # Traefik reverse proxy
-    # -------------------------------------
-    traefik:
-        image: traefik:latest
-        container_name: traefik
-        restart: always
-        command:
-            - "--api.insecure=true" # Traefik dashboard at :80/api
-            - "--providers.docker=true" # Enable Docker provider
-            - "--entrypoints.web.address=:80" # HTTP entrypoint
-        ports:
-            - "80:80" # Only external port exposed
-        volumes:
-            - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    # # -------------------------------------
+    # # Traefik reverse proxy
+    # # -------------------------------------
+    # traefik:
+    #     image: traefik:latest
+    #     container_name: traefik
+    #     restart: always
+    #     command:
+    #         - "--api.insecure=true" # Traefik dashboard at :80/api
+    #         - "--providers.docker=true" # Enable Docker provider
+    #         - "--entrypoints.web.address=:80" # HTTP entrypoint
+    #     ports:
+    #         - "80:80" # Only external port exposed
+    #     volumes:
+    #         - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
-    # -------------------------------------
-    # Backend API
-    # -------------------------------------
-    backend:
-        build: .
-        container_name: backend
-        restart: always
-        depends_on:
-            - db
-        environment:
-            CLIENT_ORIGIN: ${CLIENT_ORIGIN}
-            HOST: 0.0.0.0
-            PORT: 8000
-            APP_ENV: ${APP_ENV}
-            DB_HOST: db
-            DB_USER: ${DB_USER}
-            DB_PASSWORD: ${DB_PASSWORD}
-            DB_NAME: ${DB_NAME}
-            DB_PORT: ${DB_PORT}
-            DB_SSL_MODE: ${DB_SSL_MODE}
-            JWT_SECRET: ${JWT_SECRET}
-            JWT_EXPIRES_AT: ${JWT_EXPIRES_IN}
-            GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-            GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-            GOOGLE_OAUTH_REDIRECT_URL: ${GOOGLE_OAUTH_REDIRECT_URL}
-            RATE_LIMITER_MAX: ${RATE_LIMITER_MAX}
-            RATE_LIMITER_DURATION_MINUTES: ${RATE_LIMITER_DURATION_MINUTES}
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.backend.rule=Host(`api.localhost`)"
-            - "traefik.http.routers.backend.entrypoints=web"
-            - "traefik.http.services.backend.loadbalancer.server.port=8000"
+    # # -------------------------------------
+    # # Backend API
+    # # -------------------------------------
+    # backend:
+    #     build: .
+    #     container_name: backend
+    #     restart: always
+    #     depends_on:
+    #         - db
+    #     environment:
+    #         CLIENT_ORIGIN: ${CLIENT_ORIGIN}
+    #         HOST: 0.0.0.0
+    #         PORT: 8000
+    #         APP_ENV: ${APP_ENV}
+    #         DB_HOST: db
+    #         DB_USER: ${DB_USER}
+    #         DB_PASSWORD: ${DB_PASSWORD}
+    #         DB_NAME: ${DB_NAME}
+    #         DB_PORT: ${DB_PORT}
+    #         DB_SSL_MODE: ${DB_SSL_MODE}
+    #         JWT_SECRET: ${JWT_SECRET}
+    #         JWT_EXPIRES_AT: ${JWT_EXPIRES_IN}
+    #         GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    #         GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+    #         GOOGLE_OAUTH_REDIRECT_URL: ${GOOGLE_OAUTH_REDIRECT_URL}
+    #         RATE_LIMITER_MAX: ${RATE_LIMITER_MAX}
+    #         RATE_LIMITER_DURATION_MINUTES: ${RATE_LIMITER_DURATION_MINUTES}
+    #     labels:
+    #         - "traefik.enable=true"
+    #         - "traefik.http.routers.backend.rule=Host(`api.localhost`)"
+    #         - "traefik.http.routers.backend.entrypoints=web"
+    #         - "traefik.http.services.backend.loadbalancer.server.port=8000"
 
     # -------------------------------------
     # PostgreSQL Database
@@ -59,6 +59,8 @@ services:
             POSTGRES_USER: ${DB_USER}
             POSTGRES_PASSWORD: ${DB_PASSWORD}
             POSTGRES_DB: ${DB_NAME}
+        ports:
+            - "5432:5432"
         volumes:
             - postgres_data:/var/lib/postgresql/data
 
@@ -69,13 +71,15 @@ services:
         image: adminer:latest
         container_name: adminer
         restart: always
+        ports:
+            - "8080:8080"
         depends_on:
             - db
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.adminer.rule=Host(`adminer.localhost`)"
-            - "traefik.http.routers.adminer.entrypoints=web"
-            - "traefik.http.services.adminer.loadbalancer.server.port=8080"
+        # labels:
+        #     - "traefik.enable=true"
+        #     - "traefik.http.routers.adminer.rule=Host(`adminer.localhost`)"
+        #     - "traefik.http.routers.adminer.entrypoints=web"
+        #     - "traefik.http.services.adminer.loadbalancer.server.port=8080"
 
 volumes:
     postgres_data:

@@ -40,7 +40,7 @@ func Logger() fiber.Handler {
 			start.Format("2006-01-02 15:04:05"),
 			c.IP(),
 			c.Method(),
-			c.Path(),
+			c.OriginalURL(),
 			c.Response().StatusCode(),
 			stop.Sub(start),
 			user,

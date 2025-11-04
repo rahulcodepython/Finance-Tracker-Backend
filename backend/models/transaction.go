@@ -23,12 +23,12 @@ type Transaction struct {
 	UserID          uuid.UUID       `json:"userId"`             // ID of the user who owns the transaction
 	AccountID       uuid.UUID       `json:"accountId"`          // ID of the account associated with the transaction
 	CategoryID      uuid.UUID       `json:"categoryId"`         // ID of the category associated with the transaction
-	BudgetID        uuid.NullUUID   `json:"budgetId,omitempty"`   // ID of the budget associated with the transaction (optional)
+	BudgetID        uuid.NullUUID   `json:"budgetId,omitempty"` // ID of the budget associated with the transaction (optional)
 	Description     string          `json:"description"`        // Description of the transaction
 	Amount          float64         `json:"amount"`             // Amount of the transaction
 	Type            TransactionType `json:"type"`               // Type of the transaction (e.g., income or expense)
 	TransactionDate time.Time       `json:"transactionDate"`    // Date of the transaction
-	Note            sql.NullString  `json:"note,omitempty"`      // Additional notes for the transaction (optional)
+	Note            sql.NullString  `json:"note,omitempty"`     // Additional notes for the transaction (optional)
 	CreatedAt       time.Time       `json:"createdAt"`          // Timestamp of when the transaction was created
 	UpdatedAt       time.Time       `json:"updatedAt"`          // Timestamp of when the transaction was last updated
 }

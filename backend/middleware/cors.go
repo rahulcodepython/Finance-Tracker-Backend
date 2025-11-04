@@ -23,7 +23,7 @@ func Cors() fiber.Handler {
 		// AllowHeaders is a list of headers that are allowed in cross-origin requests.
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 		// AllowMethods is a list of methods are allowed in cross-origin requests.
-		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
+		AllowMethods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
 		// Next is a function that determines whether to skip this middleware.
 		Next: func(c *fiber.Ctx) bool {
 			// The middleware is skipped if the request is coming from the server itself.

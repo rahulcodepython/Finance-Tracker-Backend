@@ -74,11 +74,7 @@ func Setup(app *fiber.App) {
 	// Group routes for the dashboard, with authentication middleware.
 	dashboard := v1Api.Group("/dashboard", middleware.DeserializeUser)
 	dashboard.Get("/", v1.GetDashboardSummary)
-
-	// Group routes for reports, with authentication middleware.
-	reports := v1Api.Group("/reports", middleware.DeserializeUser)
-	reports.Get("/", v1.GenerateReport)
-	reports.Get("/export", v1.ExportTransactions)
+	dashboard.Get("/export-report", v1.ExportReports)
 
 	// Group routes for categories, with authentication middleware.
 	categories := v1Api.Group("/categories", middleware.DeserializeUser)

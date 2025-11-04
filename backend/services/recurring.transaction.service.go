@@ -9,11 +9,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/repository"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/serializers"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
 // CreateRecurringTransaction creates a new recurring transaction for a user.
-func CreateRecurringTransaction(userID uuid.UUID, accountID uuid.UUID, categoryID uuid.UUID, budgetID uuid.NullUUID, description string, amount float64, note sql.NullString, recurringFrequency models.RecurringFrequency, recurringDate int, db *sql.DB) (*models.RecurringTransaction, error) {
+func CreateRecurringTransaction(userID uuid.UUID, accountID uuid.UUID, categoryID uuid.UUID, budgetID uuid.NullUUID, description string, amount float64, note sql.NullString, recurringFrequency models.RecurringFrequency, recurringDate int, db *sql.DB) (*serializers.RecurringTransactionResponse, error) {
 	// Get the category to determine the transaction type.
 	category, err := repository.GetCategoryByID(categoryID, db)
 	if err != nil {
@@ -76,16 +77,33 @@ func CreateRecurringTransaction(userID uuid.UUID, accountID uuid.UUID, categoryI
 	// Create a log entry for the recurring transaction creation.
 	go CreateLog(userID, fmt.Sprintf("New recurring transaction '%s' created", recurringTransaction.Description), db)
 
-	return recurringTransaction, nil
+	var recurringTransactionResponse serializers.RecurringTransactionResponse
+	recurringTransactionResponse.ID = recurringTransaction.ID
+	recurringTransactionResponse.UserID = recurringTransaction.UserID
+	recurringTransactionResponse.Description = recurringTransaction.Description
+	recurringTransactionResponse.Amount = recurringTransaction.Amount
+	recurringTransactionResponse.Type = recurringTransaction.Type
+	recurringTransactionResponse.Note = recurringTransaction.Note
+	recurringTransactionResponse.RecurringFrequency = recurringTransaction.RecurringFrequency
+	recurringTransactionResponse.RecurringDate = recurringTransaction.RecurringDate
+	recurringTransactionResponse.CreatedAt = recurringTransaction.CreatedAt
+	recurringTransactionResponse.UpdatedAt = recurringTransaction.UpdatedAt
+	recurringTransactionResponse.Account.UUID = recurringTransaction.AccountID
+	recurringTransactionResponse.Category.UUID = recurringTransaction.CategoryID
+	if recurringTransaction.BudgetID.Valid {
+		recurringTransactionResponse.Budget.UUID = recurringTransaction.BudgetID.UUID
+	}
+
+	return &recurringTransactionResponse, nil
 }
 
 // GetRecurringTransactions retrieves all recurring transactions for a user.
-func GetRecurringTransactions(userID uuid.UUID, db *sql.DB) ([]models.RecurringTransaction, error) {
+func GetRecurringTransactions(userID uuid.UUID, db *sql.DB) ([]serializers.RecurringTransactionResponse, error) {
 	return repository.GetRecurringTransactionsByUserID(userID, db)
 }
 
 // UpdateRecurringTransaction updates an existing recurring transaction.
-func UpdateRecurringTransaction(id uuid.UUID, accountID uuid.UUID, categoryID uuid.UUID, budgetID uuid.NullUUID, description string, amount float64, note sql.NullString, recurringFrequency models.RecurringFrequency, recurringDate int, db *sql.DB) (*models.RecurringTransaction, error) {
+func UpdateRecurringTransaction(id uuid.UUID, accountID uuid.UUID, categoryID uuid.UUID, budgetID uuid.NullUUID, description string, amount float64, note sql.NullString, recurringFrequency models.RecurringFrequency, recurringDate int, db *sql.DB) (*serializers.RecurringTransactionResponse, error) {
 	// Get the recurring transaction from the database.
 	recurringTransaction, err := repository.GetRecurringTransactionByID(id, db)
 	if err != nil {
@@ -154,7 +172,24 @@ func UpdateRecurringTransaction(id uuid.UUID, accountID uuid.UUID, categoryID uu
 	// Create a log entry for the recurring transaction update.
 	go CreateLog(recurringTransaction.UserID, fmt.Sprintf("Recurring transaction '%s' updated", recurringTransaction.Description), db)
 
-	return recurringTransaction, nil
+	var recurringTransactionResponse serializers.RecurringTransactionResponse
+	recurringTransactionResponse.ID = recurringTransaction.ID
+	recurringTransactionResponse.UserID = recurringTransaction.UserID
+	recurringTransactionResponse.Description = recurringTransaction.Description
+	recurringTransactionResponse.Amount = recurringTransaction.Amount
+	recurringTransactionResponse.Type = recurringTransaction.Type
+	recurringTransactionResponse.Note = recurringTransaction.Note
+	recurringTransactionResponse.RecurringFrequency = recurringTransaction.RecurringFrequency
+	recurringTransactionResponse.RecurringDate = recurringTransaction.RecurringDate
+	recurringTransactionResponse.CreatedAt = recurringTransaction.CreatedAt
+	recurringTransactionResponse.UpdatedAt = recurringTransaction.UpdatedAt
+	recurringTransactionResponse.Account.UUID = recurringTransaction.AccountID
+	recurringTransactionResponse.Category.UUID = recurringTransaction.CategoryID
+	if recurringTransaction.BudgetID.Valid {
+		recurringTransactionResponse.Budget.UUID = recurringTransaction.BudgetID.UUID
+	}
+
+	return &recurringTransactionResponse, nil
 }
 
 // DeleteRecurringTransaction deletes a recurring transaction.

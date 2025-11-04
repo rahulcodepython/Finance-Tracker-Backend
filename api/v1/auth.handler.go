@@ -4,12 +4,13 @@ package v1
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/config"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/serializers"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
@@ -60,7 +61,7 @@ func GoogleCallback(c *fiber.Ctx) error {
 	defer response.Body.Close()
 
 	// Read the user information from the response body.
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return utils.InternalServerError(c, err, "Failed to read user info")
 	}
@@ -72,20 +73,13 @@ func GoogleCallback(c *fiber.Ctx) error {
 	}
 
 	// Log in or register the user with the retrieved information.
-	user, jwt, err := services.GoogleLogin(userInfo["email"].(string), userInfo["name"].(string), db, cfg)
+	jwt, err := services.GoogleLogin(userInfo["email"].(string), userInfo["name"].(string), db, cfg)
 	if err != nil {
 		return utils.InternalServerError(c, err, "Failed to login with Google")
 	}
 
 	// Return a 200 OK response with the user and JWT token.
-	return utils.OKResponse(c, "Login successful", fiber.Map{"user": user, "token": jwt})
-}
-
-// RegisterInput defines the input structure for user registration.
-type RegisterInput struct {
-	Name     string `json:"name" example:"John Doe"`
-	Email    string `json:"email" example:"john.doe@example.com"`
-	Password string `json:"password" example:"password123"`
+	return utils.OKResponse(c, "Login successful", fiber.Map{"token": jwt})
 }
 
 // Register handles new user registration.
@@ -101,7 +95,7 @@ type RegisterInput struct {
 // @Router       /auth/register [post]
 func Register(c *fiber.Ctx) error {
 	// Create a new instance of the RegisterInput struct.
-	var input RegisterInput
+	var input serializers.RegisterInput
 
 	// Parse the request body into the input struct.
 	if err := c.BodyParser(&input); err != nil {
@@ -113,19 +107,13 @@ func Register(c *fiber.Ctx) error {
 	cfg := c.Locals("cfg").(*config.Config)
 
 	// Call the Register service to create the new user.
-	user, token, err := services.Register(input.Name, input.Email, input.Password, db, cfg)
+	token, err := services.Register(input.Name, input.Email, input.Password, db, cfg)
 	if err != nil {
 		return utils.InternalServerError(c, err, "Failed to create user")
 	}
 
-	// Return a 201 Created response with the new user and JWT token.
-	return utils.OKCreatedResponse(c, "User registered successfully", fiber.Map{"user": user, "token": token})
-}
-
-// LoginInput defines the input structure for user login.
-type LoginInput struct {
-	Email    string `json:"email" example:"john.doe@example.com"`
-	Password string `json:"password" example:"password123"`
+	// Return a 201 Created response with the JWT token.
+	return utils.OKCreatedResponse(c, "User registered successfully", fiber.Map{"token": token})
 }
 
 // Login handles user authentication.
@@ -141,7 +129,7 @@ type LoginInput struct {
 // @Router       /auth/login [post]
 func Login(c *fiber.Ctx) error {
 	// Create a new instance of the LoginInput struct.
-	var input LoginInput
+	var input serializers.LoginInput
 
 	// Parse the request body into the input struct.
 	if err := c.BodyParser(&input); err != nil {
@@ -153,13 +141,13 @@ func Login(c *fiber.Ctx) error {
 	cfg := c.Locals("cfg").(*config.Config)
 
 	// Call the Login service to authenticate the user.
-	user, token, err := services.Login(input.Email, input.Password, db, cfg)
+	token, err := services.Login(input.Email, input.Password, db, cfg)
 	if err != nil {
 		return utils.UnauthorizedAccess(c, err, "Invalid credentials")
 	}
 
-	// Return a 200 OK response with the user and JWT token.
-	return utils.OKResponse(c, "Login successful", fiber.Map{"user": user, "token": token})
+	// Return a 200 OK response with the JWT token.
+	return utils.OKResponse(c, "Login successful", fiber.Map{"token": token})
 }
 
 // GetProfile handles the retrieval of the authenticated user's profile.
@@ -188,13 +176,7 @@ func GetProfile(c *fiber.Ctx) error {
 	}
 
 	// Return a 200 OK response with the user's profile information.
-	return utils.OKResponse(c, "Profile retrieved successfully", fiber.Map{"personal": fiber.Map{"name": user.Name, "email": user.Email}})
-}
-
-// ChangePasswordInput defines the input structure for changing a user's password.
-type ChangePasswordInput struct {
-	CurrentPassword string `json:"currentPassword" example:"password123"`
-	NewPassword     string `json:"newPassword" example:"newpassword456"`
+	return utils.OKResponse(c, "Profile retrieved successfully", user)
 }
 
 // ChangePassword handles changing the authenticated user's password.
@@ -210,7 +192,7 @@ type ChangePasswordInput struct {
 // @Router       /auth/change-password [post]
 func ChangePassword(c *fiber.Ctx) error {
 	// Create a new instance of the ChangePasswordInput struct.
-	var input ChangePasswordInput
+	var input serializers.ChangePasswordInput
 
 	// Parse the request body into the input struct.
 	if err := c.BodyParser(&input); err != nil {

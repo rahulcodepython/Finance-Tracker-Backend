@@ -30,21 +30,21 @@ func CheckUserExistsByEmail(email string, db *sql.DB) (bool, error) {
 }
 
 // Register creates a new user and returns the user and a JWT token.
-func Register(name, email, password string, db *sql.DB, cfg *config.Config) (*models.User, string, error) {
+func Register(name, email, password string, db *sql.DB, cfg *config.Config) (string, error) {
 	// Check if a user with the given email already exists.
 	exists, err := CheckUserExistsByEmail(email, db)
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
 
 	if exists {
-		return nil, "", errors.New("user already exists")
+		return "", errors.New("user already exists")
 	}
 
 	// Hash the user's password.
 	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
 
 	// Create a new User model.
@@ -60,7 +60,7 @@ func Register(name, email, password string, db *sql.DB, cfg *config.Config) (*mo
 	// Create the user in the database.
 	err = repository.CreateUser(user, db)
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
 
 	// Create a log entry for the user registration.
@@ -69,7 +69,7 @@ func Register(name, email, password string, db *sql.DB, cfg *config.Config) (*mo
 	// Generate a JWT token for the new user.
 	token, expiresAt, err := utils.GenerateToken(user.ID.String(), cfg)
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
 
 	// Create a new JwtToken model.
@@ -87,20 +87,20 @@ func Register(name, email, password string, db *sql.DB, cfg *config.Config) (*mo
 	// Create a log entry for the JWT token creation.
 	go CreateLog(user.ID, "JWT token created", db)
 
-	return user, token, nil
+	return token, nil
 }
 
 // Login authenticates a user and returns the user and a JWT token.
-func Login(email, password string, db *sql.DB, cfg *config.Config) (*models.User, string, error) {
+func Login(email, password string, db *sql.DB, cfg *config.Config) (string, error) {
 	// Get the user from the database by email.
 	user, err := repository.GetUserByEmail(email, db)
 	if err != nil {
-		return nil, "", errors.New("invalid email or password")
+		return "", errors.New("invalid email or password")
 	}
 
 	// Check if the provided password matches the stored hash.
 	if !utils.CheckPasswordHash(password, user.Password) {
-		return nil, "", errors.New("invalid email or password")
+		return "", errors.New("invalid email or password")
 	}
 
 	// Create a log entry for the user login.
@@ -109,19 +109,19 @@ func Login(email, password string, db *sql.DB, cfg *config.Config) (*models.User
 	// Get the user's JWT token from the database.
 	jwtToken, err := repository.GetJwtTokenByUserID(db, user.ID)
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
 
 	// If a valid token exists, return it.
 	if jwtToken != nil && jwtToken.ExpiresAt.After(time.Now().In(utils.LOC)) {
-		return user, jwtToken.Token, nil
+		return jwtToken.Token, nil
 	}
 
 	// If an expired token exists, delete it.
 	if jwtToken != nil && jwtToken.ExpiresAt.Before(time.Now().In(utils.LOC)) {
 		err := repository.DeleteJwtTokenByUserID(db, user.ID)
 		if err != nil {
-			return nil, "", err
+			return "", err
 		}
 
 		// Create a log entry for the token deletion.
@@ -131,7 +131,7 @@ func Login(email, password string, db *sql.DB, cfg *config.Config) (*models.User
 	// Generate a new JWT token.
 	token, expiresAt, err := utils.GenerateToken(user.ID.String(), cfg)
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
 
 	// Create a new JwtToken model.
@@ -149,7 +149,7 @@ func Login(email, password string, db *sql.DB, cfg *config.Config) (*models.User
 	// Create a log entry for the new token creation.
 	go CreateLog(user.ID, "JWT token created", db)
 
-	return user, token, nil
+	return token, nil
 }
 
 // ChangePassword changes a user's password.
@@ -192,7 +192,7 @@ func GetProfile(userID uuid.UUID, db *sql.DB) (*models.User, error) {
 }
 
 // GoogleLogin handles user login or registration via Google OAuth.
-func GoogleLogin(email, fullName string, db *sql.DB, cfg *config.Config) (*models.User, string, error) {
+func GoogleLogin(email, fullName string, db *sql.DB, cfg *config.Config) (string, error) {
 	// Get the user from the database by email.
 	user, err := repository.GetUserByEmail(email, db)
 	if err != nil {
@@ -206,7 +206,7 @@ func GoogleLogin(email, fullName string, db *sql.DB, cfg *config.Config) (*model
 		}
 
 		if err := repository.CreateUser(user, db); err != nil {
-			return nil, "", err
+			return "", err
 		}
 		// Create a log entry for the user registration.
 		go CreateLog(user.ID, "User registered with Google", db)
@@ -218,19 +218,19 @@ func GoogleLogin(email, fullName string, db *sql.DB, cfg *config.Config) (*model
 	// Get the user's JWT token from the database.
 	jwtToken, err := repository.GetJwtTokenByUserID(db, user.ID)
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
 
 	// If a valid token exists, return it.
 	if jwtToken != nil && jwtToken.ExpiresAt.After(time.Now().In(utils.LOC)) {
-		return user, jwtToken.Token, nil
+		return jwtToken.Token, nil
 	}
 
 	// If an expired token exists, delete it.
 	if jwtToken != nil && jwtToken.ExpiresAt.Before(time.Now().In(utils.LOC)) {
 		err := repository.DeleteJwtTokenByUserID(db, user.ID)
 		if err != nil {
-			return nil, "", err
+			return "", err
 		}
 
 		// Create a log entry for the token deletion.
@@ -240,7 +240,7 @@ func GoogleLogin(email, fullName string, db *sql.DB, cfg *config.Config) (*model
 	// Generate a new JWT token.
 	token, expiresAt, err := utils.GenerateToken(user.ID.String(), cfg)
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
 
 	// Create a new JwtToken model.
@@ -258,5 +258,5 @@ func GoogleLogin(email, fullName string, db *sql.DB, cfg *config.Config) (*model
 	// Create a log entry for the new token creation.
 	go CreateLog(user.ID, "JWT token created", db)
 
-	return user, token, nil
+	return token, nil
 }

@@ -9,20 +9,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/serializers"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
-
-// CreateTransactionInput defines the input structure for creating a new transaction.
-type CreateTransactionInput struct {
-	AccountID   string  `json:"accountId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	CategoryID  string  `json:"categoryId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	BudgetID    string  `json:"budgetId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	Description string  `json:"description" example:"Coffee"`
-	Amount      float64 `json:"amount" example:"5.50"`
-	Date        string  `json:"date" example:"2025-10-26"`
-	Note        string  `json:"note" example:"Morning coffee"`
-}
 
 // CreateTransaction handles the creation of a new transaction.
 // @Summary      Create a new transaction
@@ -37,7 +27,7 @@ type CreateTransactionInput struct {
 // @Router       /transactions/create [post]
 func CreateTransaction(c *fiber.Ctx) error {
 	// Create a new instance of the CreateTransactionInput struct.
-	var input CreateTransactionInput
+	var input serializers.TransactionInput
 
 	// Get the database connection.
 	db := database.DB
@@ -137,17 +127,6 @@ func GetTransactions(c *fiber.Ctx) error {
 	return utils.OKResponse(c, "Transactions retrieved successfully", transactions)
 }
 
-// UpdateTransactionInput defines the input structure for updating a transaction.
-type UpdateTransactionInput struct {
-	AccountID   string  `json:"accountId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	CategoryID  string  `json:"categoryId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	BudgetID    string  `json:"budgetId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	Description string  `json:"description" example:"Lunch"`
-	Amount      float64 `json:"amount" example:"12.75"`
-	Date        string  `json:"date" example:"2025-10-26"`
-	Note        string  `json:"note" example:"Lunch with colleagues"`
-}
-
 // UpdateTransaction handles the update of a specific transaction.
 // @Summary      Update a transaction
 // @Description  Updates the details of a specific transaction for the authenticated user.
@@ -162,7 +141,7 @@ type UpdateTransactionInput struct {
 // @Router       /transactions/update/{id} [patch]
 func UpdateTransaction(c *fiber.Ctx) error {
 	// Create a new instance of the UpdateTransactionInput struct.
-	var input UpdateTransactionInput
+	var input serializers.TransactionInput
 
 	// Get the database connection.
 	db := database.DB

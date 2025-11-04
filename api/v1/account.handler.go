@@ -6,16 +6,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/serializers"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
-
-// CreateAccountInput defines the input structure for creating a new financial account.
-type CreateAccountInput struct {
-	Name    string  `json:"name" example:"My Savings Account"`
-	Type    string  `json:"type" example:"Savings"`
-	Balance float64 `json:"balance" example:"1000.00"`
-}
 
 // CreateAccount handles the creation of a new financial account.
 // @Summary      Create a new financial account
@@ -30,7 +24,7 @@ type CreateAccountInput struct {
 // @Router       /accounts/create [post]
 func CreateAccount(c *fiber.Ctx) error {
 	// Create a new instance of the CreateAccountInput struct to hold the request body.
-	var input CreateAccountInput
+	var input serializers.CreateAccountInput
 
 	// Parse the request body into the input struct.
 	if err := c.BodyParser(&input); err != nil {
@@ -90,13 +84,6 @@ func GetAccounts(c *fiber.Ctx) error {
 	return utils.OKResponse(c, "Accounts retrieved successfully", accounts)
 }
 
-// UpdateAccountInput defines the input structure for updating a financial account.
-type UpdateAccountInput struct {
-	Name     string `json:"name" example:"My Updated Savings Account"`
-	Type     string `json:"type" example:"Checking"`
-	IsActive bool   `json:"isActive" example:"true"`
-}
-
 // UpdateAccount handles the update of a specific financial account.
 // @Summary      Update a financial account
 // @Description  Updates the details of a specific financial account for the authenticated user.
@@ -111,7 +98,7 @@ type UpdateAccountInput struct {
 // @Router       /accounts/update/{id} [patch]
 func UpdateAccount(c *fiber.Ctx) error {
 	// Create a new instance of the UpdateAccountInput struct.
-	var input UpdateAccountInput
+	var input serializers.UpdateAccountInput
 
 	// Parse the request body into the input struct.
 	if err := c.BodyParser(&input); err != nil {

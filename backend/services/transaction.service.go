@@ -9,11 +9,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/repository"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/serializers"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
 
 // CreateTransaction creates a new transaction for a user.
-func CreateTransaction(userID uuid.UUID, accountID uuid.UUID, categoryID uuid.UUID, budgetID uuid.NullUUID, description string, amount float64, transactionDate time.Time, note sql.NullString, db *sql.DB) (*models.Transaction, error) {
+func CreateTransaction(userID uuid.UUID, accountID uuid.UUID, categoryID uuid.UUID, budgetID uuid.NullUUID, description string, amount float64, transactionDate time.Time, note sql.NullString, db *sql.DB) (*serializers.TransactionResponse, error) {
 	// Get the category to determine the transaction type.
 	category, err := repository.GetCategoryByID(categoryID, db)
 	if err != nil {
@@ -104,16 +105,32 @@ func CreateTransaction(userID uuid.UUID, accountID uuid.UUID, categoryID uuid.UU
 	// Create a log entry for the transaction creation.
 	go CreateLog(userID, fmt.Sprintf("New transaction '%s' created", transaction.Description), db)
 
-	return transaction, nil
+	var transactionResponse serializers.TransactionResponse
+	transactionResponse.ID = transaction.ID
+	transactionResponse.UserID = transaction.UserID
+	transactionResponse.Description = transaction.Description
+	transactionResponse.Amount = transaction.Amount
+	transactionResponse.Type = transaction.Type
+	transactionResponse.TransactionDate = transaction.TransactionDate
+	transactionResponse.Note = transaction.Note
+	transactionResponse.CreatedAt = transaction.CreatedAt
+	transactionResponse.UpdatedAt = transaction.UpdatedAt
+	transactionResponse.Account.UUID = transaction.AccountID
+	transactionResponse.Category.UUID = transaction.CategoryID
+	if transaction.BudgetID.Valid {
+		transactionResponse.Budget.UUID = transaction.BudgetID.UUID
+	}
+
+	return &transactionResponse, nil
 }
 
 // GetTransactions retrieves all transactions for a user with optional filters and pagination.
-func GetTransactions(userID uuid.UUID, page int, limit int, description string, categoryID string, accountID string, budgetID string, startDate string, endDate string, db *sql.DB) ([]models.Transaction, error) {
+func GetTransactions(userID uuid.UUID, page int, limit int, description string, categoryID string, accountID string, budgetID string, startDate string, endDate string, db *sql.DB) ([]serializers.TransactionResponse, error) {
 	return repository.GetTransactionsByUserIDWithFilters(userID, page, limit, description, categoryID, accountID, budgetID, startDate, endDate, db)
 }
 
 // UpdateTransaction updates an existing transaction.
-func UpdateTransaction(id uuid.UUID, accountID uuid.UUID, categoryID uuid.UUID, budgetID uuid.NullUUID, description string, amount float64, transactionDate time.Time, note sql.NullString, db *sql.DB) (*models.Transaction, error) {
+func UpdateTransaction(id uuid.UUID, accountID uuid.UUID, categoryID uuid.UUID, budgetID uuid.NullUUID, description string, amount float64, transactionDate time.Time, note sql.NullString, db *sql.DB) (*serializers.TransactionResponse, error) {
 	// Get the original transaction from the database.
 	transaction, err := repository.GetTransactionByID(id, db)
 	if err != nil {
@@ -310,8 +327,23 @@ func UpdateTransaction(id uuid.UUID, accountID uuid.UUID, categoryID uuid.UUID, 
 	// Create a log entry for the transaction update.
 	go CreateLog(transaction.UserID, fmt.Sprintf("Transaction '%s' updated", transaction.Description), db)
 
-	return transaction, nil
+	var transactionResponse serializers.TransactionResponse
+	transactionResponse.ID = transaction.ID
+	transactionResponse.UserID = transaction.UserID
+	transactionResponse.Description = transaction.Description
+	transactionResponse.Amount = transaction.Amount
+	transactionResponse.Type = transaction.Type
+	transactionResponse.TransactionDate = transaction.TransactionDate
+	transactionResponse.Note = transaction.Note
+	transactionResponse.CreatedAt = transaction.CreatedAt
+	transactionResponse.UpdatedAt = transaction.UpdatedAt
+	transactionResponse.Account.UUID = transaction.AccountID
+	transactionResponse.Category.UUID = transaction.CategoryID
+	if transaction.BudgetID.Valid {
+		transactionResponse.Budget.UUID = transaction.BudgetID.UUID
+	}
 
+	return &transactionResponse, nil
 }
 
 // DeleteTransaction deletes a transaction.
@@ -384,11 +416,15 @@ func DeleteTransaction(id uuid.UUID, db *sql.DB) error {
 }
 
 // GetAggregateData retrieves aggregate transaction data for a user.
-func GetAggregateData(userID uuid.UUID, startDate string, endDate string, db *sql.DB) (map[string]interface{}, error) {
+func GetAggregateData(userID uuid.UUID, startDate string, endDate string, db *sql.DB) (*serializers.DashboardSummary, error) {
 	return repository.GetAggregateDataByUserID(userID, startDate, endDate, db)
 }
 
 // GetSpendingByCategory retrieves the total spending by category for a user.
-func GetSpendingByCategory(userID uuid.UUID, db *sql.DB) ([]map[string]interface{}, error) {
+func GetSpendingByCategory(userID uuid.UUID, db *sql.DB) (*[]serializers.CategoryAggregate, error) {
 	return repository.GetSpendingByCategory(userID, db)
+}
+
+func GetIncomeExpense(userID uuid.UUID, db *sql.DB) (*serializers.IncomeExpenseAggregate, error) {
+	return repository.GetIncomeExpense(userID, db)
 }

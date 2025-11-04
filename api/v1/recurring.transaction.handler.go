@@ -7,22 +7,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
-	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/serializers"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
-
-// CreateRecurringTransactionInput defines the input structure for creating a new recurring transaction.
-type CreateRecurringTransactionInput struct {
-	AccountID          string                    `json:"accountId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	CategoryID         string                    `json:"categoryId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	BudgetID           string                    `json:"budgetId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	Description        string                    `json:"description" example:"Monthly Subscription"`
-	Amount             float64                   `json:"amount" example:"15.99"`
-	Note               string                    `json:"note" example:"Streaming service"`
-	RecurringFrequency models.RecurringFrequency `json:"recurringFrequency" example:"Monthly"`
-	RecurringDate      int                       `json:"recurringDate" example:"15"`
-}
 
 // CreateRecurringTransaction handles the creation of a new recurring transaction.
 // @Summary      Create a new recurring transaction
@@ -30,14 +18,14 @@ type CreateRecurringTransactionInput struct {
 // @Tags         Recurring Transactions
 // @Accept       json
 // @Produce      json
-// @Param        input body      CreateRecurringTransactionInput true "Create Recurring Transaction Input"
+// @Param        input body      RecurringTransactionInput true "Create Recurring Transaction Input"
 // @Success      201  {object}  utils.Response
 // @Failure      400  {object}  utils.Response
 // @Failure      500  {object}  utils.Response
 // @Router       /recurring-transactions/create [post]
 func CreateRecurringTransaction(c *fiber.Ctx) error {
-	// Create a new instance of the CreateRecurringTransactionInput struct.
-	var input CreateRecurringTransactionInput
+	// Create a new instance of the RecurringTransactionInput struct.
+	var input serializers.RecurringTransactionInput
 
 	// Parse the request body into the input struct.
 	if err := c.BodyParser(&input); err != nil {
@@ -114,18 +102,6 @@ func GetRecurringTransactions(c *fiber.Ctx) error {
 	return utils.OKResponse(c, "Recurring transactions retrieved successfully", recurringTransactions)
 }
 
-// UpdateRecurringTransactionInput defines the input structure for updating a recurring transaction.
-type UpdateRecurringTransactionInput struct {
-	AccountID          string                    `json:"accountId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	CategoryID         string                    `json:"categoryId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	BudgetID           string                    `json:"budgetId" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	Description        string                    `json:"description" example:"Updated Monthly Subscription"`
-	Amount             float64                   `json:"amount" example:"19.99"`
-	Note               string                    `json:"note" example:"Upgraded plan"`
-	RecurringFrequency models.RecurringFrequency `json:"recurringFrequency" example:"Monthly"`
-	RecurringDate      int                       `json:"recurringDate" example:"20"`
-}
-
 // UpdateRecurringTransaction handles the update of a specific recurring transaction.
 // @Summary      Update a recurring transaction
 // @Description  Updates the details of a specific recurring transaction for the authenticated user.
@@ -133,14 +109,14 @@ type UpdateRecurringTransactionInput struct {
 // @Accept       json
 // @Produce      json
 // @Param        id   path      string                        true "Recurring Transaction ID"
-// @Param        input body      UpdateRecurringTransactionInput true "Update Recurring Transaction Input"
+// @Param        input body      RecurringTransactionInput true "Update Recurring Transaction Input"
 // @Success      200  {object}  utils.Response
 // @Failure      400  {object}  utils.Response
 // @Failure      500  {object}  utils.Response
 // @Router       /recurring-transactions/update/{id} [patch]
 func UpdateRecurringTransaction(c *fiber.Ctx) error {
-	// Create a new instance of the UpdateRecurringTransactionInput struct.
-	var input UpdateRecurringTransactionInput
+	// Create a new instance of the RecurringTransactionInput struct.
+	var input serializers.RecurringTransactionInput
 
 	// Parse the request body into the input struct.
 	if err := c.BodyParser(&input); err != nil {

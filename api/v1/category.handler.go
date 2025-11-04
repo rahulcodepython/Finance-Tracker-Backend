@@ -6,15 +6,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/serializers"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
-
-// CreateCategoryInput defines the input structure for creating a new transaction category.
-type CreateCategoryInput struct {
-	Name string `json:"name" example:"Groceries"`
-	Type string `json:"type" example:"Expense"`
-}
 
 // CreateCategory handles the creation of a new transaction category.
 // @Summary      Create a new transaction category
@@ -29,7 +24,7 @@ type CreateCategoryInput struct {
 // @Router       /categories/create [post]
 func CreateCategory(c *fiber.Ctx) error {
 	// Create a new instance of the CreateCategoryInput struct.
-	var input CreateCategoryInput
+	var input serializers.CategoryInput
 
 	// Parse the request body into the input struct.
 	if err := c.BodyParser(&input); err != nil {
@@ -76,12 +71,6 @@ func GetCategories(c *fiber.Ctx) error {
 	return utils.OKResponse(c, "Categories retrieved successfully", categories)
 }
 
-// UpdateCategoryInput defines the input structure for updating a transaction category.
-type UpdateCategoryInput struct {
-	Name string `json:"name" example:"Food"`
-	Type string `json:"type" example:"Expense"`
-}
-
 // UpdateCategory handles the update of a specific transaction category.
 // @Summary      Update a transaction category
 // @Description  Updates the details of a specific transaction category for the authenticated user.
@@ -96,7 +85,7 @@ type UpdateCategoryInput struct {
 // @Router       /categories/update/{id} [patch]
 func UpdateCategory(c *fiber.Ctx) error {
 	// Create a new instance of the UpdateCategoryInput struct.
-	var input UpdateCategoryInput
+	var input serializers.CategoryInput
 
 	// Parse the request body into the input struct.
 	if err := c.BodyParser(&input); err != nil {

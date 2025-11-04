@@ -5,15 +5,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/database"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/serializers"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/services"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/utils"
 )
-
-// CreateBudgetInput defines the input structure for creating a new budget.
-type CreateBudgetInput struct {
-	Name   string  `json:"name" example:"Monthly Groceries"`
-	Amount float64 `json:"amount" example:"500.00"`
-}
 
 // CreateBudget handles the creation of a new budget.
 // @Summary      Create a new budget
@@ -28,7 +23,7 @@ type CreateBudgetInput struct {
 // @Router       /budgets/create [post]
 func CreateBudget(c *fiber.Ctx) error {
 	// Create a new instance of the CreateBudgetInput struct.
-	var input CreateBudgetInput
+	var input serializers.BudgetInput
 
 	// Parse the request body into the input struct.
 	if err := c.BodyParser(&input); err != nil {
@@ -83,12 +78,6 @@ func GetBudgets(c *fiber.Ctx) error {
 	return utils.OKResponse(c, "Budgets retrieved successfully", budgets)
 }
 
-// UpdateBudgetInput defines the input structure for updating a budget.
-type UpdateBudgetInput struct {
-	Name   string  `json:"name" example:"Monthly Entertainment"`
-	Amount float64 `json:"amount" example:"200.00"`
-}
-
 // UpdateBudget handles the update of a specific budget.
 // @Summary      Update a budget
 // @Description  Updates the details of a specific budget for the authenticated user.
@@ -103,7 +92,7 @@ type UpdateBudgetInput struct {
 // @Router       /budgets/update/{id} [patch]
 func UpdateBudget(c *fiber.Ctx) error {
 	// Create a new instance of the UpdateBudgetInput struct.
-	var input UpdateBudgetInput
+	var input serializers.BudgetInput
 
 	// Parse the request body into the input struct.
 	if err := c.BodyParser(&input); err != nil {

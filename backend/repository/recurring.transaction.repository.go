@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/interfaces"
 	"github.com/rahulcodepython/finance-tracker-backend/backend/models"
+	"github.com/rahulcodepython/finance-tracker-backend/backend/serializers"
 )
 
 // CreateRecurringTransaction inserts a new recurring transaction record into the database.
@@ -20,9 +21,22 @@ func CreateRecurringTransaction(recurringTransaction *models.RecurringTransactio
 }
 
 // GetRecurringTransactionsByUserID retrieves all recurring transactions for a given user ID from the database.
-func GetRecurringTransactionsByUserID(userID uuid.UUID, db interfaces.SqlExecutor) ([]models.RecurringTransaction, error) {
+func GetRecurringTransactionsByUserID(userID uuid.UUID, db interfaces.SqlExecutor) ([]serializers.RecurringTransactionResponse, error) {
 	// Construct the SQL query for selection.
-	query := "SELECT " + models.RecurringTransactionColumns + " FROM recurring_transactions WHERE user_id = $1"
+	// query := "SELECT " + models.RecurringTransactionColumns + " FROM recurring_transactions WHERE user_id = $1"
+	query := `
+    SELECT 
+        t.id, t.user_id, t.description, t.amount, t.type,
+        t.note, t.recurring_frequency, t.recurring_date, t.created_at, t.updated_at,
+        a.id, a.name,
+        c.id, c.name,
+        b.id, b.name
+    FROM recurring_transactions t
+    INNER JOIN accounts a ON t.account_id = a.id
+    INNER JOIN categories c ON t.category_id = c.id
+    LEFT JOIN budgets b ON t.budget_id = b.id
+    WHERE t.user_id = $1
+`
 	// Execute the query.
 	rows, err := db.Query(query, userID)
 	if err != nil {
@@ -31,10 +45,16 @@ func GetRecurringTransactionsByUserID(userID uuid.UUID, db interfaces.SqlExecuto
 	defer rows.Close()
 
 	// Iterate over the rows and scan them into RecurringTransaction structs.
-	var recurringTransactions []models.RecurringTransaction
+	var recurringTransactions []serializers.RecurringTransactionResponse
 	for rows.Next() {
-		var recurringTransaction models.RecurringTransaction
-		if err := rows.Scan(&recurringTransaction.ID, &recurringTransaction.UserID, &recurringTransaction.AccountID, &recurringTransaction.CategoryID, &recurringTransaction.BudgetID, &recurringTransaction.Description, &recurringTransaction.Amount, &recurringTransaction.Type, &recurringTransaction.Note, &recurringTransaction.RecurringFrequency, &recurringTransaction.RecurringDate, &recurringTransaction.CreatedAt, &recurringTransaction.UpdatedAt); err != nil {
+		var recurringTransaction serializers.RecurringTransactionResponse
+		if err := rows.Scan(
+			&recurringTransaction.ID, &recurringTransaction.UserID, &recurringTransaction.Description, &recurringTransaction.Amount, &recurringTransaction.Type,
+			&recurringTransaction.Note, &recurringTransaction.RecurringFrequency, &recurringTransaction.RecurringDate, &recurringTransaction.CreatedAt, &recurringTransaction.UpdatedAt,
+			&recurringTransaction.Account.UUID, &recurringTransaction.Account.Name,
+			&recurringTransaction.Category.UUID, &recurringTransaction.Category.Name,
+			&recurringTransaction.Budget.UUID, &recurringTransaction.Budget.Name,
+		); err != nil {
 			return nil, err
 		}
 		recurringTransactions = append(recurringTransactions, recurringTransaction)
