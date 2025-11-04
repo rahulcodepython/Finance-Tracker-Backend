@@ -223,37 +223,3 @@ func DeleteTransaction(c *fiber.Ctx) error {
 	// Return a 200 OK response.
 	return utils.OKResponse(c, "Transaction deleted successfully", nil)
 }
-
-// GetAggregateData handles the retrieval of aggregate transaction data.
-// @Summary      Get aggregate transaction data
-// @Description  Retrieves aggregate data for transactions, such as total income, expenses, and net income, over a specified period.
-// @Tags         Transactions
-// @Produce      json
-// @Param        startDate query     string false "Start date for aggregation (YYYY-MM-DD)"
-// @Param        endDate   query     string false "End date for aggregation (YYYY-MM-DD)"
-// @Success      200       {object}  utils.Response
-// @Failure      400       {object}  utils.Response
-// @Failure      500       {object}  utils.Response
-// @Router       /transactions/aggregate [get]
-func GetAggregateData(c *fiber.Ctx) error {
-	// Get the user ID from the context.
-	userID, err := uuid.Parse(c.Locals("user_id").(string))
-	if err != nil {
-		return utils.BadResponse(c, err, "Invalid user ID")
-	}
-	// Get the start and end dates from the query parameters.
-	startDate := c.Query("startDate")
-	endDate := c.Query("endDate")
-
-	// Get the database connection.
-	db := database.DB
-
-	// Call the GetAggregateData service to retrieve the aggregate data.
-	data, err := services.GetAggregateData(userID, startDate, endDate, db)
-	if err != nil {
-		return utils.InternalServerError(c, err, "Failed to get aggregate data")
-	}
-
-	// Return a 200 OK response with the aggregate data.
-	return utils.OKResponse(c, "Aggregate data retrieved successfully", data)
-}

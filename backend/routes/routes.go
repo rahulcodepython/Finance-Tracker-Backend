@@ -69,7 +69,6 @@ func Setup(app *fiber.App) {
 	transactions.Get("/", v1.GetTransactions)
 	transactions.Patch("/update/:id", v1.UpdateTransaction)
 	transactions.Delete("/delete/:id", v1.DeleteTransaction)
-	transactions.Get("/aggregate", v1.GetAggregateData)
 
 	// Group routes for the dashboard, with authentication middleware.
 	dashboard := v1Api.Group("/dashboard", middleware.DeserializeUser)
